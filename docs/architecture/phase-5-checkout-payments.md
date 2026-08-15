@@ -134,7 +134,10 @@ Input: `{ items:[{product_id, size, quantity}], promo_code?, customer:{name,emai
 - **Gate (failure paths):** invalid product, unavailable, qty>stock, invalid/expired/
   exhausted promo → clean 4xx, no order row created.
 
-### 5.3 — Checkout UI (replace the Coming Soon modal)
+### 5.3 — Checkout UI (replace the Coming Soon modal) ✅ BUILT (gated)
+Real form on `cart.html` → `checkout` fn → Razorpay, behind `DN_CONFIG.checkoutEnabled`
+(default false → Coming Soon). Verified in-browser with mocks; goes live when the
+function is deployed + keys set and the flag is flipped.
 - `cart.html`: real form (name, email, phone, address) → POST to `checkout` → open
   Razorpay `checkout.js` with the returned `{ order_id, amount, key_id }`.
 - On Razorpay success handler: show "payment processing" state and poll/await the order
