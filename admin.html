@@ -337,11 +337,15 @@
 </head>
 <body>
 
-    <!-- ═══ AUTH GATE — Google OAuth (authn) + admins-table (authz via RLS) ═══ -->
+    <!-- ═══ AUTH GATE — email/password (authn) + admins-table (authz via RLS) ═══ -->
     <div id="auth-gate" style="position:fixed;inset:0;z-index:1000;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;text-align:center;padding:24px;">
         <h1 style="font-size:1.2rem;font-weight:700;letter-spacing:0.15em;">DRIP NATION · ADMIN</h1>
         <div id="auth-gate-msg" style="color:#666;font-size:0.85rem;max-width:380px;line-height:1.6;">Checking access…</div>
-        <button id="auth-login-btn" class="btn btn-primary" style="display:none;" onclick="signInGoogle()">Sign in with Google</button>
+        <form id="auth-login-form" style="display:none;flex-direction:column;gap:12px;width:280px;text-align:left;" onsubmit="signInEmail(event)">
+            <input id="auth-email" type="email" placeholder="Email" required autocomplete="username" style="background:transparent;border:1px solid #222;color:#fff;padding:12px;font-size:0.85rem;">
+            <input id="auth-password" type="password" placeholder="Password" required autocomplete="current-password" style="background:transparent;border:1px solid #222;color:#fff;padding:12px;font-size:0.85rem;">
+            <button type="submit" class="btn btn-primary">Sign in</button>
+        </form>
         <button id="auth-signout-btn" class="btn btn-ghost" style="display:none;" onclick="signOut()">Sign out</button>
     </div>
 
@@ -693,7 +697,7 @@
     <div class="toast-wrap" id="toastWrap"></div>
 
     <script>
-        // ── Supabase-backed admin. Authn: Google OAuth. Authz: admins table (RLS). ──
+        // ── Supabase-backed admin. Authn: email/password. Authz: admins table (RLS). ──
         let sb = null;                                  // set on DOMContentLoaded
         let CATS = [], PRODUCTS = [], PROMOS = [], ORDERS = [];   // last-loaded caches
         const ACT_KEY = 'dn_activity';                  // activity log stays local (no table yet)
@@ -725,12 +729,12 @@
         async function initAuth() {
             const gate = document.getElementById('auth-gate');
             const msg = document.getElementById('auth-gate-msg');
-            const loginBtn = document.getElementById('auth-login-btn');
+            const loginForm = document.getElementById('auth-login-form');
             const signoutBtn = document.getElementById('auth-signout-btn');
-            loginBtn.style.display = 'none'; signoutBtn.style.display = 'none';
+            loginForm.style.display = 'none'; signoutBtn.style.display = 'none';
             if (!sb) { msg.textContent = 'Could not load Supabase. Refresh the page.'; return; }
             const { data: { session } } = await sb.auth.getSession();
-            if (!session) { msg.textContent = 'Sign in to access the admin panel.'; loginBtn.style.display = 'inline-flex'; return; }
+            if (!session) { msg.textContent = 'Sign in to access the admin panel.'; loginForm.style.display = 'flex'; return; }
             const { data: adminRow, error } = await sb.from('admins').select('id').eq('id', session.user.id).maybeSingle();
             if (error) { msg.textContent = 'Access check failed: ' + error.message; signoutBtn.style.display = 'inline-flex'; return; }
             if (!adminRow) {
@@ -740,7 +744,16 @@
             gate.style.display = 'none';        // admin confirmed → reveal panel
             await renderAll();
         }
-        function signInGoogle() { sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.href.split('#')[0] } }); }
+        async function signInEmail(e) {
+            e.preventDefault();
+            const email = document.getElementById('auth-email').value.trim();
+            const password = document.getElementById('auth-password').value;
+            const msg = document.getElementById('auth-gate-msg');
+            msg.textContent = 'Signing in…';
+            const { error } = await sb.auth.signInWithPassword({ email, password });
+            if (error) { msg.textContent = error.message; return; }
+            // onAuthStateChange → initAuth re-runs, revealing the panel (or "not admin")
+        }
         async function signOut() { await sb.auth.signOut(); location.reload(); }
 
         function productsTableHTML(list) {
