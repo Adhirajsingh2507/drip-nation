@@ -164,10 +164,13 @@ Code committed at `supabase/functions/razorpay-webhook/` — deploy-ready, await
 - **Gate (failure paths):** forged signature → 401; duplicate event → no double-decrement;
   unmatched order handled; payment.failed leaves stock intact.
 
-### 5.5 — Confirmation email (Resend) + order lookup 🟡 EMAIL DONE
-Order-confirmation template written (`razorpay-webhook/email.ts`) and wired into the
-webhook — on-brand, email-client-safe, no-op until `RESEND_API_KEY`/`RESEND_FROM` are set.
-Guest order-lookup view still ⬜ pending (see Open Decisions #7).
+### 5.5 — Confirmation email (Resend) + order lookup ✅ BUILT (gated)
+Order-confirmation email (`razorpay-webhook/email.ts`, on-brand + client-safe) wired into
+the webhook. **Guest order lookup = signed link:** an HMAC token (`_shared/token.ts`) is
+issued by `checkout`, put in the email + on the confirmation screen, and verified by the
+`order-status` function; `order.html` renders it. RLS stays closed to anon — the signed
+endpoint is the only guest read path. No-op until `RESEND_*` / `ORDER_LOOKUP_SECRET` /
+`SITE_URL` are set and the functions are deployed.
 - On Paid: send order confirmation (items, total, address) via Resend from the webhook.
 - Guest order-confirmation view: a page that reads the order by id **only right after
   checkout** (short-lived token or the return from checkout) — anon cannot list orders

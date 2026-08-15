@@ -12,6 +12,7 @@
 //                               RAZORPAY_KEY_ID=… RAZORPAY_KEY_SECRET=…
 // ============================================================
 import { createClient } from 'jsr:@supabase/supabase-js@2';
+import { signOrder } from '../_shared/token.ts';
 
 const cors = {
   'Access-Control-Allow-Origin': '*',
@@ -113,6 +114,8 @@ Deno.serve(async (req) => {
   const rzpOrder = await rzpRes.json();
   await admin.from('orders').update({ razorpay_order_id: rzpOrder.id }).eq('id', order.id);
 
-  // 10. hand the browser the payment handle (server-computed amount)
-  return json({ order_id: order.id, razorpay_order_id: rzpOrder.id, amount: total * 100, key_id: keyId });
+  // 10. hand the browser the payment handle + a signed order-lookup token
+  const lookupSecret = Deno.env.get('ORDER_LOOKUP_SECRET');
+  const lookup_token = lookupSecret ? await signOrder(String(order.id), lookupSecret) : null;
+  return json({ order_id: order.id, razorpay_order_id: rzpOrder.id, amount: total * 100, key_id: keyId, lookup_token });
 });

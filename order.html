@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Order | Drip Nation</title>
+    <meta name="description" content="View your Drip Nation order.">
+    <meta name="robots" content="noindex">
+    <link rel="stylesheet" href="assets/css/styles.css">
+    <script src="assets/js/cart.js" defer></script>
+    <script src="assets/js/supabase-client.js" defer></script>
+    <style>
+        .order-page { padding-top: 90px; }
+        .order-wrap { max-width: 720px; margin: 0 auto; padding: 20px 20px 80px; }
+        .order-card { border: 1px solid var(--glass-border); border-radius: 12px; overflow: hidden; background: var(--glass-bg); }
+        .order-head { padding: 30px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .order-eyebrow { font-size: 0.6rem; letter-spacing: 0.3em; text-transform: uppercase; color: var(--text-muted); }
+        .order-title { font-size: clamp(1.8rem, 5vw, 2.6rem); font-weight: 800; text-transform: uppercase; letter-spacing: 0.02em; margin: 8px 0 6px; }
+        .order-sub { font-size: 0.8rem; color: var(--text-muted); letter-spacing: 0.05em; }
+        .order-badges { display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
+        .obadge { font-size: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase; padding: 6px 12px; border-radius: 3px; border: 1px solid var(--glass-border); }
+        .obadge.paid { color: #34d399; border-color: rgba(52,211,153,0.4); }
+        .obadge.pending { color: #fbbf24; border-color: rgba(251,191,36,0.4); }
+        .obadge.failed { color: #f87171; border-color: rgba(248,113,113,0.4); }
+        .order-section { padding: 24px 30px; border-bottom: 1px solid rgba(255,255,255,0.06); }
+        .order-line { display: flex; justify-content: space-between; align-items: baseline; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.06); }
+        .order-line:last-child { border-bottom: none; }
+        .oli-name { font-size: 0.95rem; }
+        .oli-meta { font-size: 0.65rem; color: var(--text-muted); letter-spacing: 0.08em; text-transform: uppercase; }
+        .oli-price { font-size: 0.9rem; white-space: nowrap; }
+        .order-summary-row { display: flex; justify-content: space-between; padding: 6px 0; font-size: 0.85rem; }
+        .order-summary-row.muted { color: var(--text-muted); }
+        .order-summary-row.total { font-size: 1.1rem; font-weight: 800; letter-spacing: 0.02em; padding-top: 14px; }
+        .order-label { font-size: 0.6rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 10px; }
+        .order-empty { text-align: center; padding: 80px 20px; }
+        .order-empty p { font-size: 1rem; color: rgba(255,255,255,0.4); letter-spacing: 0.05em; margin-bottom: 24px; }
+        .order-cta { font-size: 0.75rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--primary); border: 1px solid var(--glass-border); padding: 14px 40px; border-radius: 50px; text-decoration: none; display: inline-block; }
+        .order-cta:hover { background: var(--primary); color: var(--bg-pure); }
+    </style>
+</head>
+
+<body class="order-page">
+    <nav class="dn-breadcrumbs">
+        <a href="index.html">Home</a>
+        <span class="separator">/</span>
+        <span class="current">Order</span>
+    </nav>
+
+    <div class="order-wrap" id="order-wrap">
+        <p style="text-align:center;color:var(--text-muted);letter-spacing:0.15em;padding:60px 0;">LOADING YOUR ORDER…</p>
+    </div>
+
+    <script>
+        const esc = s => String(s ?? '').replace(/[&<>"]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[m]));
+        const inr = n => '₹' + Number(n || 0).toLocaleString('en-IN');
+
+        function errCard(msg) {
+            return `<div class="order-empty"><p>${esc(msg)}</p><a href="shop.html" class="order-cta">CONTINUE SHOPPING</a></div>`;
+        }
+
+        function render(o) {
+            const short = String(o.id).slice(0, 8).toUpperCase();
+            const date = o.created_at ? new Date(o.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '';
+            const payClass = o.payment === 'Paid' ? 'paid' : (o.payment === 'Failed' ? 'failed' : 'pending');
+            const items = o.order_items || [];
+            const tax = o.total - (o.subtotal - o.discount) - o.shipping;
+            const addr = o.address || {};
+
+            document.getElementById('order-wrap').innerHTML = `
+                <div class="order-card">
+                    <div class="order-head">
+                        <div class="order-eyebrow">Order Confirmation</div>
+                        <div class="order-title">Order ${short}</div>
+                        <div class="order-sub">${date}${o.customer_name ? ' · ' + esc(o.customer_name) : ''}</div>
+                        <div class="order-badges">
+                            <span class="obadge ${payClass}">${esc(o.payment)}</span>
+                            <span class="obadge">${esc(o.fulfillment)}</span>
+                        </div>
+                    </div>
+                    <div class="order-section">
+                        ${items.map(it => `
+                            <div class="order-line">
+                                <div>
+                                    <div class="oli-name">${esc(it.name)}</div>
+                                    <div class="oli-meta">${it.size ? 'Size ' + esc(it.size) + ' · ' : ''}Qty ${it.quantity}</div>
+                                </div>
+                                <div class="oli-price">${inr(it.price * it.quantity)}</div>
+                            </div>`).join('')}
+                    </div>
+                    <div class="order-section">
+                        <div class="order-summary-row muted"><span>Subtotal</span><span>${inr(o.subtotal)}</span></div>
+                        ${o.discount > 0 ? `<div class="order-summary-row" style="color:#34d399;"><span>Discount${o.promo_code ? ' (' + esc(o.promo_code) + ')' : ''}</span><span>-${inr(o.discount)}</span></div>` : ''}
+                        <div class="order-summary-row muted"><span>Shipping</span><span>${o.shipping === 0 ? 'FREE' : inr(o.shipping)}</span></div>
+                        <div class="order-summary-row muted"><span>Tax</span><span>${inr(tax)}</span></div>
+                        <div class="order-summary-row total"><span>Total</span><span>${inr(o.total)}</span></div>
+                    </div>
+                    ${(addr.line1 || addr.city) ? `
+                    <div class="order-section" style="border-bottom:none;">
+                        <div class="order-label">Ship To</div>
+                        <div style="font-size:0.85rem;color:#ccc;line-height:1.7;">
+                            ${esc(o.customer_name || '')}<br>
+                            ${esc(addr.line1 || '')}<br>
+                            ${esc([addr.city, addr.state, addr.pincode].filter(Boolean).join(', '))}
+                        </div>
+                    </div>` : ''}
+                </div>
+                <p style="text-align:center;margin-top:24px;"><a href="shop.html" class="order-cta">CONTINUE SHOPPING</a></p>`;
+        }
+
+        async function loadOrder() {
+            const params = new URLSearchParams(location.search);
+            const id = params.get('id'), token = params.get('token');
+            const wrap = document.getElementById('order-wrap');
+            if (!id || !token) { wrap.innerHTML = errCard('This order link is missing information.'); return; }
+            if (!window.DN_CONFIG) { wrap.innerHTML = errCard('Configuration error.'); return; }
+
+            let res, data;
+            try {
+                res = await fetch(window.DN_CONFIG.supabaseUrl + '/functions/v1/order-status', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'apikey': window.DN_CONFIG.supabaseAnonKey,
+                        'Authorization': 'Bearer ' + window.DN_CONFIG.supabaseAnonKey
+                    },
+                    body: JSON.stringify({ order_id: id, token })
+                });
+                data = await res.json().catch(() => ({}));
+            } catch (e) {
+                wrap.innerHTML = errCard('Network error. Please try again.'); return;
+            }
+            if (!res.ok) { wrap.innerHTML = errCard((data && data.error) || 'Could not load this order.'); return; }
+            render(data.order);
+        }
+
+        document.addEventListener('DOMContentLoaded', loadOrder);
+    </script>
+</body>
+
+</html>

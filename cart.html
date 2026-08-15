@@ -403,21 +403,23 @@
                 prefill: { name: customer.name, email: customer.email, contact: customer.phone },
                 theme: { color: '#000000' },
                 // The webhook is authoritative for fulfillment; this only updates the UI.
-                handler: () => orderPlaced(data.order_id),
+                handler: () => orderPlaced(data.order_id, data.lookup_token),
                 modal: { ondismiss: () => { msg.className = 'promo-msg error'; msg.textContent = 'Payment cancelled.'; } }
             });
             rzp.open();
         }
 
-        function orderPlaced(orderId) {
+        function orderPlaced(orderId, token) {
             localStorage.removeItem(CartEngine.key);
             closeCheckout();
             CartEngine.updateAllBadges();
             document.getElementById('cart-item-count').innerText = '0';
+            const orderLink = token ? `order.html?id=${encodeURIComponent(orderId)}&token=${encodeURIComponent(token)}` : null;
             document.getElementById('cart-container').innerHTML = `
                 <div class="empty-cart">
                     <p class="empty-cart-msg" style="color:#34d399;">ORDER PLACED</p>
                     <p style="color:var(--text-muted);letter-spacing:0.05em;margin-bottom:24px;">Order ${String(orderId).slice(0, 8)} — a confirmation email is on its way.</p>
+                    ${orderLink ? `<a href="${orderLink}" class="continue-shopping-link" style="margin-right:10px;">VIEW ORDER</a>` : ''}
                     <a href="shop.html" class="continue-shopping-link">CONTINUE SHOPPING</a>
                 </div>`;
             updateSummary(0);

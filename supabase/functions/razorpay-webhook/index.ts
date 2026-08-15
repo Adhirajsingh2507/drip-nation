@@ -15,6 +15,7 @@
 // ============================================================
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 import { orderConfirmationEmail } from './email.ts';
+import { signOrder } from '../_shared/token.ts';
 
 Deno.serve(async (req) => {
   if (req.method !== 'POST') return new Response('Method not allowed', { status: 405 });
@@ -83,7 +84,12 @@ async function sendConfirmationEmail(admin: any, orderId: string): Promise<void>
   if (!key) return;
   const { data: order } = await admin.from('orders').select('*, order_items(*)').eq('id', orderId).single();
   if (!order?.email) return;
-  const { subject, html, text } = orderConfirmationEmail(order);
+  const lookupSecret = Deno.env.get('ORDER_LOOKUP_SECRET');
+  const site = Deno.env.get('SITE_URL');
+  const orderUrl = (lookupSecret && site)
+    ? `${site.replace(/\/$/, '')}/order.html?id=${order.id}&token=${await signOrder(String(order.id), lookupSecret)}`
+    : undefined;
+  const { subject, html, text } = orderConfirmationEmail(order, orderUrl);
   const res = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },

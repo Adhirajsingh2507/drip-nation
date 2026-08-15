@@ -8,6 +8,10 @@ in Phase 5 once the Razorpay/Resend accounts exist and secrets are set. Design:
 |---|---|---|
 | `checkout` | Server-authoritative order + Razorpay order creation (5.2) | `--no-verify-jwt` (public checkout) |
 | `razorpay-webhook` | Signature-verified, idempotent "mark paid" (5.4) | `--no-verify-jwt` (Razorpay has no Supabase JWT) |
+| `order-status` | Signed guest order-lookup — verifies the HMAC token, returns the order (5.5) | `--no-verify-jwt` (public, token-gated) |
+
+`_shared/token.ts` holds the HMAC sign/verify used by `checkout` (issues the token),
+`razorpay-webhook` (puts the link in the email), and `order-status` (verifies it).
 
 Both rely on migration `0006` (`apply_paid_order`, `redeem_promo`, `payment_events`,
 Razorpay columns), which **is applied**.
@@ -23,11 +27,14 @@ supabase secrets set \
   RAZORPAY_KEY_SECRET=xxx \
   RAZORPAY_WEBHOOK_SECRET=xxx \
   RESEND_API_KEY=re_xxx \
-  RESEND_FROM='Drip Nation <orders@your-verified-domain>'   # must be a Resend-verified sender
+  RESEND_FROM='Drip Nation <orders@your-verified-domain>' \  # must be a Resend-verified sender
+  ORDER_LOOKUP_SECRET=$(openssl rand -hex 32) \              # any strong random string
+  SITE_URL=https://your-vercel-domain                       # for the order link in emails
 # SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are injected automatically.
 
 supabase functions deploy checkout --no-verify-jwt
 supabase functions deploy razorpay-webhook --no-verify-jwt
+supabase functions deploy order-status --no-verify-jwt
 ```
 
 Then in the **Razorpay dashboard** → Webhooks, add

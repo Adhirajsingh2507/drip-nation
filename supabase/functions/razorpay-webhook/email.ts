@@ -25,7 +25,7 @@ const inr = (n: number) => '₹' + Number(n || 0).toLocaleString('en-IN');
 const esc = (s: unknown) =>
   String(s ?? '').replace(/[&<>"]/g, (m) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[m]!));
 
-export function orderConfirmationEmail(order: Order): { subject: string; html: string; text: string } {
+export function orderConfirmationEmail(order: Order, orderUrl?: string): { subject: string; html: string; text: string } {
   const short = String(order.id).slice(0, 8).toUpperCase();
   const date = order.created_at
     ? new Date(order.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
@@ -68,6 +68,15 @@ export function orderConfirmationEmail(order: Order): { subject: string; html: s
     </td></tr>`
     : '';
 
+  const buttonBlock = orderUrl
+    ? `
+    <tr><td style="padding:28px 32px 0;">
+      <table role="presentation" cellpadding="0" cellspacing="0"><tr><td style="background:#ffffff;border-radius:2px;">
+        <a href="${esc(orderUrl)}" style="display:inline-block;padding:14px 30px;font-family:Helvetica,Arial,sans-serif;font-size:12px;font-weight:700;letter-spacing:2px;color:#000000;text-decoration:none;text-transform:uppercase;">View your order</a>
+      </td></tr></table>
+    </td></tr>`
+    : '';
+
   const html = `<!doctype html>
 <html>
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
@@ -107,6 +116,8 @@ export function orderConfirmationEmail(order: Order): { subject: string; html: s
           </table>
         </td></tr>
 
+        ${buttonBlock}
+
         ${addressBlock}
 
         <tr><td style="padding:32px;">
@@ -134,6 +145,7 @@ export function orderConfirmationEmail(order: Order): { subject: string; html: s
     order.discount > 0 ? `Discount: -${inr(order.discount)}` : '',
     `Shipping: ${order.shipping === 0 ? 'FREE' : inr(order.shipping)}`,
     `Total: ${inr(order.total)}`,
+    orderUrl ? `\nView your order: ${orderUrl}` : '',
   ].filter(Boolean);
 
   return {
