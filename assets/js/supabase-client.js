@@ -13,7 +13,9 @@ window.DN_CONFIG = {
   useSupabase: true,
   // Flip to true once the `checkout` Edge Function is deployed and Razorpay keys
   // are set. Until then the cart shows the "Coming Soon" modal.
-  checkoutEnabled: false
+  // NOTE: currently ON for preview — the form shows but PAY errors until the
+  // checkout function is deployed. Set back to false to re-hide it.
+  checkoutEnabled: true
 };
 
 window.dnSupabase = (window.supabase && window.DN_CONFIG.useSupabase)
