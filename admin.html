@@ -332,8 +332,18 @@
             .modal { margin: 10px; width: calc(100% - 20px); }
         }
     </style>
+    <script src="assets/js/vendor/supabase-js.min.js" defer></script>
+    <script src="assets/js/supabase-client.js" defer></script>
 </head>
 <body>
+
+    <!-- ═══ AUTH GATE — Google OAuth (authn) + admins-table (authz via RLS) ═══ -->
+    <div id="auth-gate" style="position:fixed;inset:0;z-index:1000;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;text-align:center;padding:24px;">
+        <h1 style="font-size:1.2rem;font-weight:700;letter-spacing:0.15em;">DRIP NATION · ADMIN</h1>
+        <div id="auth-gate-msg" style="color:#666;font-size:0.85rem;max-width:380px;line-height:1.6;">Checking access…</div>
+        <button id="auth-login-btn" class="btn btn-primary" style="display:none;" onclick="signInGoogle()">Sign in with Google</button>
+        <button id="auth-signout-btn" class="btn btn-ghost" style="display:none;" onclick="signOut()">Sign out</button>
+    </div>
 
     <button class="mobile-toggle" onclick="toggleSidebar()">MENU</button>
     <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
@@ -439,7 +449,7 @@
                     <h2>Orders</h2>
                 </div>
                 <div class="page-header-actions">
-                    <button class="btn btn-ghost" onclick="simulateWebhook()">Simulate Webhook</button>
+                    <button class="btn btn-ghost" onclick="renderAll()">Refresh</button>
                 </div>
             </div>
             <table class="tbl">
@@ -541,8 +551,9 @@
             
             <button class="btn btn-primary" onclick="toast('Settings saved.')" style="margin-bottom: 60px;">Save Settings</button>
 
-            <h3 style="font-size: 0.8rem; text-transform: uppercase; color: var(--muted); margin-bottom: 20px;">Danger Zone</h3>
-            <button class="btn btn-danger" onclick="resetAllData()">Reset All Admin Data</button>
+            <h3 style="font-size: 0.8rem; text-transform: uppercase; color: var(--muted); margin-bottom: 20px;">Local State</h3>
+            <p style="font-size:0.7rem;color:var(--dim);margin-bottom:12px;max-width:520px;">Catalog, orders and promos live in the database and are never wiped from here. This only clears the local activity log.</p>
+            <button class="btn btn-danger" onclick="clearActivity()">Clear Local Activity Log</button>
         </section>
 
     </main>
@@ -682,271 +693,270 @@
     <div class="toast-wrap" id="toastWrap"></div>
 
     <script>
-        const KEYS = {
-            categories: 'dn_categories',
-            products: 'dn_products',
-            orders: 'dn_orders',
-            promos: 'dn_promos',
-            activity: 'dn_activity'
-        };
+        // ── Supabase-backed admin. Authn: Google OAuth. Authz: admins table (RLS). ──
+        let sb = null;                                  // set on DOMContentLoaded
+        let CATS = [], PRODUCTS = [], PROMOS = [], ORDERS = [];   // last-loaded caches
+        const ACT_KEY = 'dn_activity';                  // activity log stays local (no table yet)
 
-        const get = k => JSON.parse(localStorage.getItem(k)) || [];
-        const set = (k, v) => localStorage.setItem(k, JSON.stringify(v));
-        const fmt = n => '₹' + Number(n).toLocaleString('en-IN');
+        const fmt = n => '₹' + Number(n || 0).toLocaleString('en-IN');
         const now = () => new Date().toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+        const esc = s => String(s ?? '').replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
+        const shortId = id => String(id).slice(0, 8);
+        const fmtDate = ts => ts ? new Date(ts).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '';
+        const catIdByName = name => (CATS.find(c => c.name === name) || {}).id;
 
         function logActivity(text) {
-            const logs = get(KEYS.activity);
+            const logs = JSON.parse(localStorage.getItem(ACT_KEY)) || [];
             logs.unshift({ time: now(), text });
             if (logs.length > 50) logs.length = 50;
-            set(KEYS.activity, logs);
+            localStorage.setItem(ACT_KEY, JSON.stringify(logs));
         }
 
-        function renderAll() {
-            const products = get(KEYS.products);
-            const orders = get(KEYS.orders);
-            const cats = get(KEYS.categories);
-            const promos = get(KEYS.promos);
-            const activity = get(KEYS.activity);
+        // Row → UI-shape mappers (DB columns → fields the admin UI expects)
+        const mapProduct = r => ({
+            id: r.id, name: r.name, category: r.categories ? r.categories.name : '', category_id: r.category_id,
+            price: r.price, sale: r.sale, stock: r.stock,
+            sizes: Array.isArray(r.sizes) ? r.sizes.join(', ') : (r.sizes || ''),
+            sku: r.sku, images: r.images || [], material: r.material || '', desc: r.description || ''
+        });
+        const mapPromo = r => ({ id: r.id, code: r.code, type: r.type, value: r.value, minOrder: r.min_order, maxUses: r.max_uses, used: r.used, expiry: r.expiry, status: r.status });
 
-            // Dashboard
-            const totalRev = orders.filter(o => o.payment === 'Paid').reduce((s, o) => s + o.total, 0);
-            document.getElementById('dash-rev').innerText = fmt(totalRev);
-            document.getElementById('dash-ord').innerText = orders.length;
+        // ── Auth gate ──
+        async function initAuth() {
+            const gate = document.getElementById('auth-gate');
+            const msg = document.getElementById('auth-gate-msg');
+            const loginBtn = document.getElementById('auth-login-btn');
+            const signoutBtn = document.getElementById('auth-signout-btn');
+            loginBtn.style.display = 'none'; signoutBtn.style.display = 'none';
+            if (!sb) { msg.textContent = 'Could not load Supabase. Refresh the page.'; return; }
+            const { data: { session } } = await sb.auth.getSession();
+            if (!session) { msg.textContent = 'Sign in to access the admin panel.'; loginBtn.style.display = 'inline-flex'; return; }
+            const { data: adminRow, error } = await sb.from('admins').select('id').eq('id', session.user.id).maybeSingle();
+            if (error) { msg.textContent = 'Access check failed: ' + error.message; signoutBtn.style.display = 'inline-flex'; return; }
+            if (!adminRow) {
+                msg.innerHTML = 'Signed in as <b>' + esc(session.user.email || '') + '</b> — this account is not an admin.';
+                signoutBtn.style.display = 'inline-flex'; return;
+            }
+            gate.style.display = 'none';        // admin confirmed → reveal panel
+            await renderAll();
+        }
+        function signInGoogle() { sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.href.split('#')[0] } }); }
+        async function signOut() { await sb.auth.signOut(); location.reload(); }
 
-            document.getElementById('dash-recent-orders').innerHTML = orders.slice(0, 5).map(o => `
+        function productsTableHTML(list) {
+            return list.map(p => `
                 <tr>
-                    <td style="color:var(--muted);">${o.id}</td>
-                    <td>${o.customer}</td>
-                    <td>${fmt(o.total)}</td>
-                    <td><span class="badge">${o.payment}</span></td>
-                </tr>
-            `).join('') || '<tr><td colspan="4" class="tbl-empty">No orders yet</td></tr>';
-
-            // Categories
-            document.getElementById('tbl-categories').innerHTML = cats.map(c => `
-                <tr>
-                    <td>${c.name}</td>
-                    <td style="color:var(--muted);">${c.slug}</td>
-                    <td>${c.count} pcs</td>
-                    <td><span class="badge">${c.status}</span></td>
-                    <td class="tbl-actions">
-                        <button class="btn btn-ghost btn-sm" onclick="toast('Edit connected to backend')">Edit</button>
-                        <button class="btn btn-danger btn-sm" onclick="deleteCategory(${c.id})">Delete</button>
-                    </td>
-                </tr>
-            `).join('') || '<tr><td colspan="5" class="tbl-empty">No categories</td></tr>';
-
-            // Products
-            const pSearch = (document.getElementById('productSearch')?.value || '').toLowerCase();
-            const pFiltered = pSearch ? products.filter(p => p.name.toLowerCase().includes(pSearch)) : products;
-            
-            document.getElementById('tbl-products').innerHTML = pFiltered.map(p => `
-                <tr>
-                    <td>${p.name}</td>
-                    <td>${p.category}</td>
+                    <td>${esc(p.name)}</td>
+                    <td>${esc(p.category)}</td>
                     <td>${fmt(p.price)}</td>
                     <td>${p.stock}</td>
-                    <td style="color:var(--muted);">${p.sizes}</td>
+                    <td style="color:var(--muted);">${esc(p.sizes)}</td>
                     <td class="tbl-actions">
                         <button class="btn btn-ghost btn-sm" onclick="editProduct(${p.id})">Edit</button>
                         <button class="btn btn-danger btn-sm" onclick="deleteProduct(${p.id})">Delete</button>
                     </td>
                 </tr>
             `).join('') || '<tr><td colspan="6" class="tbl-empty">No products found</td></tr>';
+        }
+
+        async function renderAll() {
+            let cats, prods, promos, orders;
+            try {
+                [cats, prods, promos, orders] = await Promise.all([
+                    sb.from('categories').select('*').order('id'),
+                    sb.from('products').select('*, categories(name)').order('id'),
+                    sb.from('promos').select('*').order('id'),
+                    sb.from('orders').select('*').order('created_at', { ascending: false })
+                ]);
+                for (const r of [cats, prods, promos, orders]) if (r.error) throw r.error;
+            } catch (e) {
+                console.error('[admin] load failed', e);
+                toast('Failed to load data: ' + (e.message || e));
+                return;
+            }
+            CATS = cats.data.map(c => ({ id: c.id, name: c.name, slug: c.slug, image: c.image, desc: c.description || '', status: c.status }));
+            PRODUCTS = prods.data.map(mapProduct);
+            PROMOS = promos.data.map(mapPromo);
+            ORDERS = orders.data;
+
+            const countFor = name => PRODUCTS.filter(p => p.category === name).length;
+
+            // Dashboard
+            const totalRev = ORDERS.filter(o => o.payment === 'Paid').reduce((s, o) => s + o.total, 0);
+            document.getElementById('dash-rev').innerText = fmt(totalRev);
+            document.getElementById('dash-ord').innerText = ORDERS.length;
+            document.getElementById('dash-recent-orders').innerHTML = ORDERS.slice(0, 5).map(o => `
+                <tr><td style="color:var(--muted);">${shortId(o.id)}</td><td>${esc(o.customer_name)}</td><td>${fmt(o.total)}</td><td><span class="badge">${o.payment}</span></td></tr>
+            `).join('') || '<tr><td colspan="4" class="tbl-empty">No orders yet</td></tr>';
+
+            // Categories
+            document.getElementById('tbl-categories').innerHTML = CATS.map(c => `
+                <tr><td>${esc(c.name)}</td><td style="color:var(--muted);">${esc(c.slug)}</td><td>${countFor(c.name)} pcs</td>
+                <td><span class="badge">${c.status}</span></td>
+                <td class="tbl-actions"><button class="btn btn-danger btn-sm" onclick="deleteCategory(${c.id})">Delete</button></td></tr>
+            `).join('') || '<tr><td colspan="5" class="tbl-empty">No categories</td></tr>';
+
+            // Products
+            renderProducts();
 
             // Orders
-            document.getElementById('tbl-orders').innerHTML = orders.map(o => `
-                <tr>
-                    <td style="color:var(--muted);">${o.id}</td>
-                    <td style="color:var(--muted);">${o.date}</td>
-                    <td>${o.customer}</td>
-                    <td>${fmt(o.total)}</td>
-                    <td>
-                        <select onchange="toast('Fulfillment updated')" style="padding: 4px; font-size:0.75rem;">
-                            ${['Processing','Shipped','Delivered'].map(s => `<option value="${s}" ${o.fulfillment === s ? 'selected' : ''}>${s}</option>`).join('')}
-                        </select>
-                    </td>
-                </tr>
-            `).join('') || '<tr><td colspan="5" class="tbl-empty">No orders found</td></tr>';
+            document.getElementById('tbl-orders').innerHTML = ORDERS.map(o => `
+                <tr><td style="color:var(--muted);">${shortId(o.id)}</td><td style="color:var(--muted);">${fmtDate(o.created_at)}</td><td>${esc(o.customer_name)}</td><td>${fmt(o.total)}</td>
+                <td><select onchange="updateFulfillment('${o.id}', this.value)" style="padding:4px;font-size:0.75rem;">
+                    ${['Processing', 'Shipped', 'Delivered', 'Cancelled'].map(s => `<option value="${s}" ${o.fulfillment === s ? 'selected' : ''}>${s}</option>`).join('')}
+                </select></td></tr>
+            `).join('') || '<tr><td colspan="5" class="tbl-empty">No orders yet</td></tr>';
 
             // Promos
-            document.getElementById('tbl-promos').innerHTML = promos.map((p, i) => `
-                <tr>
-                    <td>${p.code}</td>
-                    <td>${p.type}</td>
-                    <td>${p.value}</td>
-                    <td>${p.used}</td>
-                    <td><button class="btn btn-danger btn-sm" onclick="deletePromo(${i})">Delete</button></td>
-                </tr>
+            document.getElementById('tbl-promos').innerHTML = PROMOS.map(p => `
+                <tr><td>${esc(p.code)}</td><td>${p.type}</td><td>${p.value}</td><td>${p.used}</td>
+                <td><button class="btn btn-danger btn-sm" onclick="deletePromo(${p.id})">Delete</button></td></tr>
             `).join('') || '<tr><td colspan="5" class="tbl-empty">No promos found</td></tr>';
 
-            // Activity
+            // Activity (local)
+            const activity = JSON.parse(localStorage.getItem(ACT_KEY)) || [];
             document.getElementById('full-activity').innerHTML = activity.map(a => `
                 <div style="border-bottom: 1px solid var(--border); padding-bottom: 16px;">
-                    <div style="font-size: 0.85rem;">${a.text}</div>
+                    <div style="font-size: 0.85rem;">${esc(a.text)}</div>
                     <div style="font-size: 0.65rem; color: var(--muted); margin-top: 4px;">${a.time}</div>
                 </div>
             `).join('') || '<div class="tbl-empty">No activity recorded</div>';
 
             // Badges
-            const lowStock = products.filter(p => p.stock < 10).length;
-            const pending = orders.filter(o => o.payment === 'Pending').length;
-            document.getElementById('low-stock-badge').innerText = lowStock;
-            document.getElementById('pending-badge').innerText = pending;
-            document.getElementById('low-stock-badge').style.display = lowStock > 0 ? 'inline-block' : 'none';
-            document.getElementById('pending-badge').style.display = pending > 0 ? 'inline-block' : 'none';
+            const lowStock = PRODUCTS.filter(p => p.stock < 10).length;
+            const pending = ORDERS.filter(o => o.payment === 'Pending').length;
+            const lb = document.getElementById('low-stock-badge'), pb = document.getElementById('pending-badge');
+            lb.innerText = lowStock; pb.innerText = pending;
+            lb.style.display = lowStock > 0 ? 'inline-block' : 'none';
+            pb.style.display = pending > 0 ? 'inline-block' : 'none';
 
-            // Modal dropdown
-            document.getElementById('m-prod-category').innerHTML = cats.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
+            // Modal category dropdown
+            document.getElementById('m-prod-category').innerHTML = CATS.map(c => `<option value="${esc(c.name)}">${esc(c.name)}</option>`).join('');
         }
 
-        function submitCategory(e) {
+        // Product search re-renders from cache (no refetch per keystroke)
+        function renderProducts() {
+            const pSearch = (document.getElementById('productSearch')?.value || '').toLowerCase();
+            const list = pSearch ? PRODUCTS.filter(p => p.name.toLowerCase().includes(pSearch)) : PRODUCTS;
+            document.getElementById('tbl-products').innerHTML = productsTableHTML(list);
+        }
+
+        async function submitCategory(e) {
             e.preventDefault();
-            const cats = get(KEYS.categories);
-            cats.push({
-                id: Date.now(), name: document.getElementById('m-cat-name').value,
-                slug: document.getElementById('m-cat-slug').value, image: document.getElementById('m-cat-image').value,
-                count: parseInt(document.getElementById('m-cat-count').value), status: 'Active',
-                created: now().split(',')[0], desc: document.getElementById('m-cat-desc').value
-            });
-            set(KEYS.categories, cats);
-            logActivity(`Category created: ${document.getElementById('m-cat-name').value}`);
-            closeModal('category-modal'); e.target.reset(); renderAll(); toast(`Category created`);
+            const name = document.getElementById('m-cat-name').value.trim();
+            const row = {
+                name,
+                slug: document.getElementById('m-cat-slug').value.trim().replace(/\.html$/, ''),
+                image: document.getElementById('m-cat-image').value.trim(),
+                description: document.getElementById('m-cat-desc').value.trim(),
+                status: 'Active'
+            };
+            const { error } = await sb.from('categories').insert(row);
+            if (error) { toast('Save failed: ' + error.message); return; }
+            logActivity(`Category created: ${name}`);
+            closeModal('category-modal'); e.target.reset(); await renderAll(); toast('Category created');
         }
 
-        function deleteCategory(id) {
+        async function deleteCategory(id) {
             if (!confirm('Delete this category?')) return;
-            let cats = get(KEYS.categories);
-            cats = cats.filter(c => c.id !== id);
-            set(KEYS.categories, cats);
-            logActivity(`Category deleted`);
-            renderAll(); toast('Category deleted');
+            const { error } = await sb.from('categories').delete().eq('id', id);
+            if (error) {
+                toast(/foreign key/i.test(error.message) ? 'Category still has products — move or delete them first.' : 'Delete failed: ' + error.message);
+                return;
+            }
+            logActivity('Category deleted'); await renderAll(); toast('Category deleted');
         }
 
-        function submitProduct(e) {
+        async function submitProduct(e) {
             e.preventDefault();
             const editId = document.getElementById('m-prod-edit-id').value;
-            const products = get(KEYS.products);
-            const name = document.getElementById('m-prod-name').value;
-            
-            const data = {
-                name, category: document.getElementById('m-prod-category').value,
-                material: document.getElementById('m-prod-material').value,
+            const catName = document.getElementById('m-prod-category').value;
+            const category_id = catIdByName(catName);
+            if (!category_id) { toast('Pick a valid category.'); return; }
+            const saleVal = document.getElementById('m-prod-sale').value;
+            const name = document.getElementById('m-prod-name').value.trim();
+            const row = {
+                name, category_id,
+                material: document.getElementById('m-prod-material').value.trim(),
                 price: parseInt(document.getElementById('m-prod-price').value),
-                sale: document.getElementById('m-prod-sale').value ? parseInt(document.getElementById('m-prod-sale').value) : '',
+                sale: saleVal ? parseInt(saleVal) : null,
                 stock: parseInt(document.getElementById('m-prod-stock').value),
-                sizes: document.getElementById('m-prod-sizes').value,
-                images: [
-                    document.getElementById('m-prod-img1').value,
-                    document.getElementById('m-prod-img2').value,
-                    document.getElementById('m-prod-img3').value,
-                    document.getElementById('m-prod-img4').value
-                ],
-                desc: document.getElementById('m-prod-desc').value
+                sizes: document.getElementById('m-prod-sizes').value.split(',').map(s => s.trim()).filter(Boolean),
+                images: [1, 2, 3, 4].map(i => document.getElementById('m-prod-img' + i).value.trim()).filter(Boolean),
+                description: document.getElementById('m-prod-desc').value.trim()
             };
-
-            if (editId) {
-                const idx = products.findIndex(p => p.id === parseInt(editId));
-                if (idx !== -1) products[idx] = { ...products[idx], ...data };
-                toast(`Product updated`);
-            } else {
-                data.id = Date.now();
-                products.unshift(data);
-                toast(`Product added`);
-            }
-
-            set(KEYS.products, products);
+            const { error } = editId
+                ? await sb.from('products').update(row).eq('id', parseInt(editId))
+                : await sb.from('products').insert(row);
+            if (error) { toast('Save failed: ' + error.message); return; }
             logActivity(`Product saved: ${name}`);
             closeModal('product-modal'); e.target.reset();
             document.getElementById('m-prod-edit-id').value = '';
             document.getElementById('product-modal-title').innerText = 'Product CMS';
-            renderAll();
+            await renderAll(); toast(editId ? 'Product updated' : 'Product added');
         }
 
         function editProduct(id) {
-            const products = get(KEYS.products);
-            const p = products.find(pr => pr.id === id);
+            const p = PRODUCTS.find(pr => pr.id === id);
             if (!p) return;
             document.getElementById('m-prod-edit-id').value = p.id;
             document.getElementById('m-prod-name').value = p.name;
             document.getElementById('m-prod-material').value = p.material || '';
             document.getElementById('m-prod-price').value = p.price;
-            document.getElementById('m-prod-sale').value = p.sale || '';
+            document.getElementById('m-prod-sale').value = p.sale ?? '';
             document.getElementById('m-prod-stock').value = p.stock;
             document.getElementById('m-prod-sizes').value = p.sizes;
             document.getElementById('m-prod-desc').value = p.desc || '';
-            
-            if (p.images && p.images.length === 4) {
-                document.getElementById('m-prod-img1').value = p.images[0];
-                document.getElementById('m-prod-img2').value = p.images[1];
-                document.getElementById('m-prod-img3').value = p.images[2];
-                document.getElementById('m-prod-img4').value = p.images[3];
-            } else {
-                document.getElementById('m-prod-img1').value = p.image || '';
-                document.getElementById('m-prod-img2').value = p.image || '';
-                document.getElementById('m-prod-img3').value = p.image || '';
-                document.getElementById('m-prod-img4').value = p.image || '';
-            }
-
+            const imgs = p.images && p.images.length ? p.images : [];
+            for (let i = 0; i < 4; i++) document.getElementById('m-prod-img' + (i + 1)).value = imgs[i] || '';
             document.getElementById('product-modal-title').innerText = 'Edit Product';
-            document.getElementById('m-prod-category').innerHTML = get(KEYS.categories).map(c => `<option value="${c.name}">${c.name}</option>`).join('');
+            document.getElementById('m-prod-category').innerHTML = CATS.map(c => `<option value="${esc(c.name)}">${esc(c.name)}</option>`).join('');
             document.getElementById('m-prod-category').value = p.category;
             openModal('product-modal');
         }
 
-        function deleteProduct(id) {
+        async function deleteProduct(id) {
             if (!confirm('Remove product?')) return;
-            let products = get(KEYS.products);
-            products = products.filter(p => p.id !== id);
-            set(KEYS.products, products);
-            renderAll(); toast('Product removed');
+            const { error } = await sb.from('products').delete().eq('id', id);
+            if (error) { toast('Delete failed: ' + error.message); return; }
+            logActivity('Product removed'); await renderAll(); toast('Product removed');
         }
 
-        function submitPromo(e) {
+        async function submitPromo(e) {
             e.preventDefault();
-            const promos = get(KEYS.promos);
-            promos.push({
-                code: document.getElementById('m-promo-code').value.toUpperCase(),
+            const row = {
+                code: document.getElementById('m-promo-code').value.trim().toUpperCase(),
                 type: document.getElementById('m-promo-type').value,
-                value: parseInt(document.getElementById('m-promo-value').value),
-                minOrder: parseInt(document.getElementById('m-promo-min').value) || 0,
-                used: 0, status: 'Active'
-            });
-            set(KEYS.promos, promos);
-            closeModal('promo-modal'); e.target.reset(); renderAll(); toast(`Promo created`);
+                value: parseInt(document.getElementById('m-promo-value').value) || 0,
+                min_order: parseInt(document.getElementById('m-promo-min').value) || 0,
+                max_uses: 0, used: 0, status: 'Active'
+            };
+            const { error } = await sb.from('promos').insert(row);
+            if (error) { toast(/duplicate|unique/i.test(error.message) ? 'That code already exists.' : 'Save failed: ' + error.message); return; }
+            logActivity(`Promo created: ${row.code}`);
+            closeModal('promo-modal'); e.target.reset(); await renderAll(); toast('Promo created');
         }
 
-        function deletePromo(idx) {
+        async function deletePromo(id) {
             if (!confirm('Delete promo?')) return;
-            const promos = get(KEYS.promos);
-            promos.splice(idx, 1);
-            set(KEYS.promos, promos);
-            renderAll(); toast('Promo deleted');
+            const { error } = await sb.from('promos').delete().eq('id', id);
+            if (error) { toast('Delete failed: ' + error.message); return; }
+            await renderAll(); toast('Promo deleted');
         }
 
-        function simulateWebhook() {
-            const id = 'DN-' + Math.floor(1000 + Math.random() * 9000);
-            const orders = get(KEYS.orders);
-            orders.unshift({ id, date: now().split(',')[0], customer: 'Test User', total: 1999, payment: 'Paid', fulfillment: 'Processing' });
-            set(KEYS.orders, orders);
-            logActivity(`Webhook received for order ${id}`);
-            renderAll(); toast(`Webhook received!`);
+        async function updateFulfillment(id, value) {
+            const { error } = await sb.from('orders').update({ fulfillment: value }).eq('id', id);
+            if (error) { toast('Update failed: ' + error.message); await renderAll(); return; }
+            logActivity(`Order ${shortId(id)} → ${value}`); toast('Fulfillment updated');
         }
 
         function saveCMS() {
-            logActivity('CMS configuration published');
-            toast('CMS changes published');
-        }
-
-        function resetAllData() {
-            if (!confirm('Erase ALL data?')) return;
-            Object.values(KEYS).forEach(k => localStorage.removeItem(k));
-            location.reload();
+            logActivity('CMS configuration published (local only)');
+            toast('Saved locally — Hero/Marquee CMS is not yet a DB table.');
         }
 
         function clearActivity() {
-            set(KEYS.activity, []);
+            localStorage.setItem(ACT_KEY, '[]');
             renderAll(); toast('Activity cleared');
         }
 
@@ -957,18 +967,8 @@
             document.querySelector(`.nav-link[data-tab="${tabId}"]`).classList.add('active');
         }
 
-        document.querySelectorAll('.nav-link[data-tab]').forEach(link => {
-            link.addEventListener('click', function() {
-                navTo(this.dataset.tab);
-                if (window.innerWidth <= 768) toggleSidebar();
-            });
-        });
-
         function openModal(id) { document.getElementById(id).classList.add('open'); }
         function closeModal(id) { document.getElementById(id).classList.remove('open'); }
-        document.querySelectorAll('.modal-backdrop').forEach(m => {
-            m.addEventListener('click', function(e) { if (e.target === this) this.classList.remove('open'); });
-        });
 
         function toggleSidebar() {
             document.getElementById('sidebar').classList.toggle('open');
@@ -984,9 +984,21 @@
             setTimeout(() => el.remove(), 2600);
         }
 
-        // Initialize if empty, let store-bridge handle defaults generally, but admin might need to pull it.
-        // Usually, navigating to storefront seeds it. We'll just render whatever is there.
-        renderAll();
+        // ── Boot (runs after the deferred supabase-js + supabase-client.js scripts) ──
+        window.addEventListener('DOMContentLoaded', () => {
+            sb = window.dnSupabase;
+            document.querySelectorAll('.nav-link[data-tab]').forEach(link => {
+                link.addEventListener('click', function () {
+                    navTo(this.dataset.tab);
+                    if (window.innerWidth <= 768) toggleSidebar();
+                });
+            });
+            document.querySelectorAll('.modal-backdrop').forEach(m => {
+                m.addEventListener('click', function (e) { if (e.target === this) this.classList.remove('open'); });
+            });
+            initAuth();
+            if (sb) sb.auth.onAuthStateChange(() => initAuth());
+        });
     </script>
 </body>
 
