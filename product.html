@@ -237,7 +237,7 @@
                     <button class="product-btn product-btn-primary"
                         onclick="CartEngine.showComingSoonModal()">BUY NOW</button>
                     <button class="product-btn product-btn-ghost"
-                        onclick="CartEngine.addItem('${safeName}', '${cartPrice}', '${primaryImage}')">ADD TO BAG</button>
+                        onclick="CartEngine.addItem(${product.id}, '${safeName}', '${cartPrice}', '${primaryImage}', ((document.querySelector('.size-pill.active')||{}).textContent||'').trim())">ADD TO BAG</button>
                 </div>
             `;
 

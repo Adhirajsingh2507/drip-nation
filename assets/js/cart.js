@@ -9,13 +9,21 @@ const CartEngine = {
         return JSON.parse(localStorage.getItem(this.key)) || [];
     },
 
-    addItem: function (name, price, image) {
+    // Stable per-line key = product_id + size (falls back to name for legacy items).
+    // Two sizes of the same product are two lines; checkout (Phase 5) needs both.
+    lineKey: function (item) {
+        return (item.product_id != null ? item.product_id : item.name) + '|' + (item.size || '');
+    },
+
+    addItem: function (productId, name, price, image, size) {
+        size = size || '';
         let items = this.getItems();
-        let existing = items.find(i => i.name === name && i.price.toString() === price.toString());
+        const key = productId + '|' + size;
+        let existing = items.find(i => this.lineKey(i) === key);
         if (existing) {
             existing.quantity += 1;
         } else {
-            items.push({ name, price, image, quantity: 1 });
+            items.push({ product_id: productId, name, price, image, size, quantity: 1 });
         }
         localStorage.setItem(this.key, JSON.stringify(items));
         this.updateAllBadges();
@@ -23,20 +31,19 @@ const CartEngine = {
         this.showAddedFeedback();
     },
 
-    removeItem: function (name) {
-        let items = this.getItems();
-        items = items.filter(i => i.name !== name);
+    removeItem: function (key) {
+        let items = this.getItems().filter(i => this.lineKey(i) !== key);
         localStorage.setItem(this.key, JSON.stringify(items));
         this.updateAllBadges();
     },
 
-    updateQuantity: function (name, delta) {
+    updateQuantity: function (key, delta) {
         let items = this.getItems();
-        let item = items.find(i => i.name === name);
+        let item = items.find(i => this.lineKey(i) === key);
         if (item) {
             item.quantity += delta;
             if (item.quantity <= 0) {
-                items = items.filter(i => i.name !== name);
+                items = items.filter(i => this.lineKey(i) !== key);
             }
         }
         localStorage.setItem(this.key, JSON.stringify(items));

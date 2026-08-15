@@ -198,26 +198,28 @@
             const totalItems = items.reduce((s, i) => s + i.quantity, 0);
             countEl.innerText = totalItems;
 
-            const safeName = n => n.replace(/'/g, "\\'");
-
-            container.innerHTML = items.map(item => `
+            container.innerHTML = items.map(item => {
+                const key = CartEngine.lineKey(item).replace(/'/g, "\\'");
+                const sizeLabel = item.size ? 'SIZE: ' + item.size : 'ONE SIZE';
+                return `
                 <div class="cart-item">
                     <div class="cart-item-img" style="background-image: url('${item.image || ''}')"></div>
                     <div class="cart-item-details">
                         <span class="cart-item-name">${item.name}</span>
-                        <span class="cart-item-meta">SIZE: M · COLOR: BLACK</span>
+                        <span class="cart-item-meta">${sizeLabel}</span>
                         <div class="cart-item-qty-row">
-                            <button class="qty-btn" onclick="changeQty('${safeName(item.name)}', -1)">−</button>
+                            <button class="qty-btn" onclick="changeQty('${key}', -1)">−</button>
                             <span class="qty-value">${item.quantity}</span>
-                            <button class="qty-btn" onclick="changeQty('${safeName(item.name)}', 1)">+</button>
+                            <button class="qty-btn" onclick="changeQty('${key}', 1)">+</button>
                         </div>
                     </div>
                     <div class="cart-item-right">
                         <span class="cart-item-price">₹${(parseInt(item.price.toString().replace(/[^0-9]/g, '')) * item.quantity).toLocaleString('en-IN')}</span>
-                        <button class="cart-remove-btn" onclick="removeItem('${safeName(item.name)}')">REMOVE</button>
+                        <button class="cart-remove-btn" onclick="removeItem('${key}')">REMOVE</button>
                     </div>
                 </div>
-            `).join('');
+                `;
+            }).join('');
 
             updateSummary(CartEngine.getTotal());
         }
@@ -292,8 +294,8 @@
             updateSummary(CartEngine.getTotal());
         }
 
-        function changeQty(name, delta) { CartEngine.updateQuantity(name, delta); renderCart(); }
-        function removeItem(name) { CartEngine.removeItem(name); renderCart(); }
+        function changeQty(key, delta) { CartEngine.updateQuantity(key, delta); renderCart(); }
+        function removeItem(key) { CartEngine.removeItem(key); renderCart(); }
 
         document.addEventListener("DOMContentLoaded", renderCart);
     </script>
