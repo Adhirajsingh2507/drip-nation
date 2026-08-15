@@ -1,0 +1,26 @@
+name: Vercel Deploy
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# Cancel superseded runs on the same ref
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+      # prod on main, preview everywhere else
+      PROD: ${{ github.ref == 'refs/heads/main' && '--prod' || '' }}
+    steps:
+      - uses: actions/checkout@v4
+      - run: npm install -g vercel@latest
+      - run: vercel pull --yes --token=${{ secrets.VERCEL_TOKEN }}
+      - run: vercel build $PROD --token=${{ secrets.VERCEL_TOKEN }}
+      - run: vercel deploy --prebuilt $PROD --token=${{ secrets.VERCEL_TOKEN }}
