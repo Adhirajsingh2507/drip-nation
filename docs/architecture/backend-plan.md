@@ -83,7 +83,8 @@ Swap the data source behind `store-bridge.js` (the storefront reads
 
 ## Phase 5 — Checkout + orders + payment 🔒 ⬜
 
-The core commerce phase. Split into reviewable sub-steps.
+The core commerce phase. Split into reviewable sub-steps. **Detailed design draft:**
+[`phase-5-checkout-payments.md`](./phase-5-checkout-payments.md).
 
 ### 5a — Close the schema hardening debt
 - ✅ **Done (migration `0002`)** — dropped the `with check (true)` anon INSERT
