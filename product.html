@@ -4,573 +4,276 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Drip Nation | Product Detail</title>
-    <meta name="description" content="View product details at Drip Nation. Premium streetwear with athletic heritage.">
+    <title>Product | Drip Nation</title>
+    <meta name="description" content="View product details at Drip Nation. Premium streetwear.">
     <link rel="stylesheet" href="assets/css/styles.css">
-    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@200;300;400;600;700&display=swap"
-        rel="stylesheet">
     <script src="assets/js/cart.js" defer></script>
+    <script src="assets/js/store-bridge.js" defer></script>
     <style>
-        .product-page {
-            padding-top: 70px;
-        }
-
-        /* ── Product Layout ── */
+        .product-page { padding-top: 70px; }
         .product-layout {
-            display: grid;
-            grid-template-columns: 1.2fr 1fr;
-            gap: 60px;
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 20px 40px 80px 40px;
+            display: grid; grid-template-columns: 1.2fr 1fr; gap: 60px;
+            max-width: 1400px; margin: 0 auto; padding: 20px 40px 80px 40px;
         }
-
-        /* ── Showcase ── */
         .showcase-container {
-            width: 100%;
-            aspect-ratio: 3 / 4;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            perspective: 2000px;
-            overflow: hidden;
+            width: 100%; aspect-ratio: 3 / 4; display: flex; justify-content: center; align-items: center;
+            perspective: 2000px; overflow: hidden;
             border: 1px solid transparent;
-            border-image: linear-gradient(to right, transparent 0%, rgba(255, 255, 255, 0.3) 50%, transparent 100%) 1;
-            background: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.08) 0%, transparent 60%);
+            border-image: linear-gradient(to right, transparent 0%, rgba(255,255,255,0.3) 50%, transparent 100%) 1;
+            background: radial-gradient(circle at 50% 50%, rgba(255,255,255,0.08) 0%, transparent 60%);
             border-radius: 8px;
         }
-
-        .carousel-3d {
-            width: 260px;
-            height: 360px;
-            position: relative;
-            transform-style: preserve-3d;
-            cursor: grab;
-        }
-
-        .carousel-3d:active {
-            cursor: grabbing;
-        }
-
+        .carousel-3d { width: 260px; height: 360px; position: relative; transform-style: preserve-3d; cursor: grab; }
+        .carousel-3d:active { cursor: grabbing; }
         .carousel-panel {
-            position: absolute;
-            width: 260px;
-            height: 360px;
-            background-size: cover;
-            background-position: center;
-            top: 50%;
-            left: 50%;
-            margin-top: -180px;
-            margin-left: -130px;
+            position: absolute; width: 260px; height: 360px;
+            background-size: cover; background-position: center;
+            top: 50%; left: 50%; margin-top: -180px; margin-left: -130px;
             border-radius: 4px;
-            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.9), inset 0 0 0 1px rgba(255, 255, 255, 0.2);
-            -webkit-box-reflect: below 10px linear-gradient(transparent 60%, rgba(255, 255, 255, 0.15) 100%);
+            box-shadow: 0 30px 80px rgba(0,0,0,0.9), inset 0 0 0 1px rgba(255,255,255,0.2);
+            -webkit-box-reflect: below 10px linear-gradient(transparent 60%, rgba(255,255,255,0.15) 100%);
             overflow: hidden;
         }
-
         .carousel-panel::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.03) 30%, transparent 50%, rgba(0, 0, 0, 0.4) 100%);
+            content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(135deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.03) 30%, transparent 50%, rgba(0,0,0,0.4) 100%);
             pointer-events: none;
         }
-
         .carousel-panel:nth-child(1) { transform: rotateY(0deg) translateZ(160px); }
         .carousel-panel:nth-child(2) { transform: rotateY(90deg) translateZ(160px); }
         .carousel-panel:nth-child(3) { transform: rotateY(180deg) translateZ(160px); }
         .carousel-panel:nth-child(4) { transform: rotateY(270deg) translateZ(160px); }
 
-        /* ── Product Info Panel ── */
-        .product-info {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            padding: 40px 0;
-        }
+        .product-info { display: flex; flex-direction: column; justify-content: center; padding: 40px 0; }
+        .product-info-label { font-size: 0.6rem; font-weight: 300; letter-spacing: 0.3em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 10px; }
+        .product-info-title { font-size: clamp(2.5rem, 5vw, 4rem); font-weight: 800; letter-spacing: 0.02em; text-transform: uppercase; line-height: 0.95; margin-bottom: 10px; }
+        .product-info-desc { font-size: 0.85rem; font-weight: 300; color: rgba(255,255,255,0.5); line-height: 1.7; margin-bottom: 30px; }
+        .product-info-price { font-size: clamp(1.8rem, 3vw, 2.5rem); font-weight: 700; letter-spacing: 0.02em; margin-bottom: 35px; }
+        .product-info-price .original { text-decoration: line-through; color: var(--text-muted); margin-right: 12px; font-weight: 400; }
+        .product-info-sku { font-size: 0.6rem; color: var(--text-muted); letter-spacing: 0.2em; margin-bottom: 25px; }
+        .product-info-stock { font-size: 0.7rem; font-weight: 500; margin-bottom: 20px; }
 
-        .product-info-label {
-            font-family: var(--font-body);
-            font-size: 0.6rem;
-            font-weight: 200;
-            letter-spacing: 0.3em;
-            text-transform: uppercase;
-            color: var(--text-muted);
-            margin-bottom: 10px;
-        }
-
-        .product-info-title {
-            font-family: var(--font-display);
-            font-size: clamp(3rem, 6vw, 5rem);
-            font-weight: 400;
-            letter-spacing: 0.05em;
-            text-transform: uppercase;
-            line-height: 0.9;
-            margin-bottom: 30px;
-        }
-
-        .product-info-price {
-            font-family: var(--font-display);
-            font-size: clamp(2rem, 4vw, 3rem);
-            font-weight: 400;
-            letter-spacing: 0.05em;
-            color: var(--primary);
-            margin-bottom: 40px;
-            text-shadow: 0 0 30px rgba(255, 255, 255, 0.15);
-        }
-
-        /* Size Selector */
-        .selector-label {
-            font-family: var(--font-body);
-            font-size: 0.65rem;
-            font-weight: 300;
-            letter-spacing: 0.2em;
-            text-transform: uppercase;
-            color: var(--text-muted);
-            margin-bottom: 12px;
-        }
-
-        .size-selector {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 30px;
-        }
-
+        .selector-label { font-size: 0.65rem; font-weight: 500; letter-spacing: 0.2em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 12px; }
+        .size-selector { display: flex; gap: 10px; margin-bottom: 30px; flex-wrap: wrap; }
         .size-pill {
-            width: 48px;
-            height: 48px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border: 1px solid var(--glass-border);
-            border-radius: 4px;
-            background: transparent;
-            color: var(--primary);
-            font-family: var(--font-body);
-            font-size: 0.75rem;
-            font-weight: 300;
-            letter-spacing: 0.1em;
-            cursor: pointer;
-            transition: all var(--transition-ease);
+            min-width: 48px; height: 48px; display: flex; align-items: center; justify-content: center;
+            border: 1px solid var(--glass-border); border-radius: 4px;
+            background: transparent; color: var(--primary);
+            font-size: 0.75rem; font-weight: 400; letter-spacing: 0.1em;
+            cursor: pointer; transition: all 0.2s ease; padding: 0 12px;
         }
+        .size-pill:hover, .size-pill.active { background: var(--primary); color: var(--bg-pure); border-color: var(--primary); }
 
-        .size-pill:hover,
-        .size-pill.active {
-            background: var(--primary);
-            color: var(--bg-pure);
-            border-color: var(--primary);
-        }
-
-        /* Color Swatches */
-        .color-selector {
-            display: flex;
-            gap: 12px;
-            margin-bottom: 40px;
-        }
-
-        .color-swatch {
-            width: 28px;
-            height: 28px;
-            border-radius: 50%;
-            border: 2px solid transparent;
-            cursor: pointer;
-            transition: border-color var(--transition-ease), transform var(--transition-ease);
-        }
-
-        .color-swatch:hover,
-        .color-swatch.active {
-            border-color: var(--primary);
-            transform: scale(1.15);
-        }
-
-        /* Action Buttons */
-        .product-actions {
-            display: flex;
-            gap: 12px;
-        }
-
+        .product-actions { display: flex; gap: 12px; }
         .product-btn {
-            flex: 1;
-            padding: 18px 30px;
-            font-family: var(--font-display);
-            font-size: 1.4rem;
-            font-weight: 400;
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-            border-radius: 0;
-            cursor: pointer;
-            transition: all var(--transition-ease);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            text-decoration: none;
+            flex: 1; padding: 18px 30px;
+            font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em;
+            cursor: pointer; transition: all 0.2s ease;
+            display: flex; align-items: center; justify-content: center; gap: 10px; text-decoration: none; border: none;
         }
+        .product-btn-primary { background: var(--primary); color: var(--bg-pure); }
+        .product-btn-primary:hover { background: #e0e0e0; transform: translateY(-3px); box-shadow: 0 10px 30px rgba(255,255,255,0.15); }
+        .product-btn-ghost { background: transparent; color: var(--primary); border: 1px solid rgba(255,255,255,0.4); }
+        .product-btn-ghost:hover { background: var(--primary); color: var(--bg-pure); transform: translateY(-3px); }
 
-        .product-btn-primary {
-            background: var(--primary);
-            color: var(--bg-pure);
-            border: 1px solid var(--primary);
-        }
-
-        .product-btn-primary:hover {
-            background: #e0e0e0;
-            transform: translateY(-3px);
-            box-shadow: 0 10px 30px rgba(255, 255, 255, 0.15);
-        }
-
-        .product-btn-ghost {
-            background: transparent;
-            color: var(--primary);
-            border: 1px solid rgba(255, 255, 255, 0.4);
-        }
-
-        .product-btn-ghost:hover {
-            background: var(--primary);
-            color: var(--bg-pure);
-            transform: translateY(-3px);
-        }
-
-        /* ── Accordions ── */
-        .details-section {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 0 40px 40px 40px;
-        }
-
-        .accordion-item {
-            border-top: 1px solid rgba(255, 255, 255, 0.2);
-            cursor: pointer;
-            position: relative;
-        }
-
-        .accordion-item:last-child {
-            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-        }
-
-        .accordion-item::before {
-            content: '[ SPECIFICATIONS ]';
-            position: absolute;
-            top: 15px;
-            left: 0;
-            font-family: var(--font-body);
-            font-size: 0.6rem;
-            letter-spacing: 0.2em;
-            color: var(--text-muted);
-        }
-
-        .accordion-item:nth-child(2)::before {
-            content: '[ PROFILE ]';
-        }
-
+        .details-section { max-width: 1400px; margin: 0 auto; padding: 0 40px 40px 40px; }
+        .accordion-item { border-top: 1px solid rgba(255,255,255,0.2); cursor: pointer; }
+        .accordion-item:last-child { border-bottom: 1px solid rgba(255,255,255,0.2); }
         .accordion-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-end;
-            padding: 45px 0 15px 0;
-            font-family: var(--font-display);
-            font-size: clamp(2.5rem, 8vw, 5rem);
-            font-weight: 400;
-            text-transform: uppercase;
-            letter-spacing: 0.02em;
-            line-height: 0.85;
+            display: flex; justify-content: space-between; align-items: flex-end;
+            padding: 30px 0 15px 0; font-size: clamp(2rem, 6vw, 4rem); font-weight: 800;
+            text-transform: uppercase; letter-spacing: 0.02em; line-height: 0.85;
         }
-
         .accordion-content {
-            max-height: 0;
-            overflow: hidden;
+            max-height: 0; overflow: hidden;
             transition: max-height 0.4s ease-in-out, padding 0.4s ease-in-out;
-            font-family: var(--font-body);
-            font-weight: 300;
-            font-size: clamp(0.9rem, 1.5vw, 1.1rem);
-            line-height: 1.7;
-            color: #b0b0b0;
-            padding: 0;
-            max-width: 700px;
+            font-weight: 300; font-size: clamp(0.85rem, 1.4vw, 1rem); line-height: 1.7;
+            color: #b0b0b0; padding: 0; max-width: 700px;
         }
+        .accordion-content.active { max-height: 600px; padding-bottom: 30px; }
+        .plus-icon { font-size: clamp(1.2rem, 3vw, 2rem); font-weight: 200; transition: transform 0.4s ease; margin-bottom: 5px; }
+        .plus-icon.rotate { transform: rotate(45deg); }
 
-        .accordion-content.active {
-            max-height: 600px;
-            padding-bottom: 30px;
-        }
+        .dn-also-like { max-width: 1400px; margin: 0 auto; padding: 60px 40px 80px 40px; }
+        .dn-also-like-title { font-size: clamp(1.8rem, 4vw, 2.5rem); font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 30px; }
+        .dn-also-like-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
 
-        .plus-icon {
-            font-size: clamp(1.5rem, 4vw, 2.5rem);
-            font-family: var(--font-body);
-            font-weight: 200;
-            transition: transform 0.4s ease;
-            margin-bottom: 5px;
-        }
-
-        .plus-icon.rotate {
-            transform: rotate(45deg);
-        }
-
-        /* ── You May Also Like ── */
-        .dn-also-like {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 60px 40px 80px 40px;
-        }
-
-        .dn-also-like-title {
-            font-family: var(--font-display);
-            font-size: clamp(2rem, 4vw, 3rem);
-            letter-spacing: 0.05em;
-            text-transform: uppercase;
-            margin-bottom: 30px;
-        }
-
-        .dn-also-like-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 20px;
-        }
-
-        /* ── Mobile ── */
         @media (max-width: 768px) {
-            .product-layout {
-                grid-template-columns: 1fr;
-                gap: 30px;
-                padding: 10px 20px 50px 20px;
-            }
-
-            .showcase-container {
-                aspect-ratio: 1 / 1;
-            }
-
-            .carousel-3d {
-                width: 200px;
-                height: 280px;
-            }
-
-            .carousel-panel {
-                width: 200px;
-                height: 280px;
-                margin-top: -140px;
-                margin-left: -100px;
-            }
-
+            .product-layout { grid-template-columns: 1fr; gap: 30px; padding: 10px 20px 50px 20px; }
+            .showcase-container { aspect-ratio: 1 / 1; }
+            .carousel-3d { width: 200px; height: 280px; }
+            .carousel-panel { width: 200px; height: 280px; margin-top: -140px; margin-left: -100px; }
             .carousel-panel:nth-child(1) { transform: rotateY(0deg) translateZ(120px); }
             .carousel-panel:nth-child(2) { transform: rotateY(90deg) translateZ(120px); }
             .carousel-panel:nth-child(3) { transform: rotateY(180deg) translateZ(120px); }
             .carousel-panel:nth-child(4) { transform: rotateY(270deg) translateZ(120px); }
-
-            .product-info {
-                padding: 0;
-            }
-
-            .product-actions {
-                flex-direction: column;
-            }
-
-            .details-section {
-                padding: 0 20px 30px 20px;
-            }
-
-            .dn-also-like {
-                padding: 40px 20px 60px 20px;
-            }
-
-            .dn-also-like-grid {
-                grid-template-columns: repeat(2, 1fr);
-                gap: 10px;
-            }
+            .product-info { padding: 0; }
+            .product-actions { flex-direction: column; }
+            .details-section { padding: 0 20px 30px 20px; }
+            .dn-also-like { padding: 40px 20px 60px 20px; }
+            .dn-also-like-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
         }
     </style>
 </head>
 
 <body class="product-page">
-    <!-- Breadcrumbs -->
     <nav class="dn-breadcrumbs">
         <a href="index.html">Home</a>
         <span class="separator">/</span>
         <a href="shop.html">Shop</a>
         <span class="separator">/</span>
-        <a href="retro-jersey.html">Retro Jersey</a>
+        <span class="current" id="breadcrumb-cat">Collection</span>
         <span class="separator">/</span>
-        <span class="current">Studio Jersey</span>
+        <span class="current" id="breadcrumb-name">Product</span>
     </nav>
 
-    <!-- Product Layout -->
     <div class="product-layout">
-        <!-- Showcase -->
         <div class="showcase-container">
             <div class="carousel-3d" id="productCarousel">
-                <div class="carousel-panel" style="background-image: url('assets/images/i3 (1).jpeg');"></div>
-                <div class="carousel-panel" style="background-image: url('assets/images/i3 (2).jpeg');"></div>
-                <div class="carousel-panel" style="background-image: url('assets/images/i4.jpeg');"></div>
-                <div class="carousel-panel" style="background-image: url('assets/images/i5.jpeg');"></div>
+                <!-- Panels injected by JS -->
             </div>
         </div>
-
-        <!-- Product Info -->
-        <div class="product-info">
-            <span class="product-info-label">[ RETRO COLLECTION ]</span>
-            <h1 class="product-info-title">STUDIO JERSEY</h1>
-            <div class="product-info-price">₹ 2,999</div>
-
-            <div class="selector-label">SIZE</div>
-            <div class="size-selector">
-                <button class="size-pill" onclick="selectSize(this)">S</button>
-                <button class="size-pill active" onclick="selectSize(this)">M</button>
-                <button class="size-pill" onclick="selectSize(this)">L</button>
-                <button class="size-pill" onclick="selectSize(this)">XL</button>
-                <button class="size-pill" onclick="selectSize(this)">XXL</button>
-            </div>
-
-            <div class="selector-label">COLOR</div>
-            <div class="color-selector">
-                <div class="color-swatch active" style="background-color: #1a1a1a;" onclick="selectColor(this)"></div>
-                <div class="color-swatch" style="background-color: #8B0000;" onclick="selectColor(this)"></div>
-                <div class="color-swatch" style="background-color: #002868;" onclick="selectColor(this)"></div>
-                <div class="color-swatch" style="background-color: #f5f5dc;" onclick="selectColor(this)"></div>
-            </div>
-
-            <div class="product-actions">
-                <button class="product-btn product-btn-primary"
-                    onclick="CartEngine.showComingSoonModal()">BUY NOW</button>
-                <button class="product-btn product-btn-ghost"
-                    onclick="CartEngine.addItem('STUDIO JERSEY', '2999', 'assets/images/i3 (1).jpeg')">ADD TO BAG</button>
-            </div>
+        <div class="product-info" id="product-info">
+            <!-- Injected by JS -->
         </div>
     </div>
 
-    <!-- Accordions -->
     <div class="details-section">
         <div class="accordion-item" onclick="toggleAccordion(this)">
-            <div class="accordion-header">
-                Material <span class="plus-icon">+</span>
-            </div>
-            <div class="accordion-content">
-                Premium 100% moisture-wicking polyester fabric. Engineered to breathe, crafted to last. The fabric
-                features horizontal ultra-fine ribbing for maximum durability and heat dissipation, giving it an
-                authentic athletic feel while maintaining streetwear comfort.
+            <div class="accordion-header">Material <span class="plus-icon">+</span></div>
+            <div class="accordion-content" id="accordion-material">
+                Premium moisture-wicking fabric engineered to breathe, crafted to last. Features ultra-fine ribbing for maximum durability and heat dissipation, giving it an authentic athletic feel while maintaining streetwear comfort.
             </div>
         </div>
         <div class="accordion-item" onclick="toggleAccordion(this)">
-            <div class="accordion-header">
-                Description <span class="plus-icon">+</span>
-            </div>
-            <div class="accordion-content">
-                The classic retro fit jersey. Completely authentic to the era, featuring embroidered crests, velvet-feel
-                sponsor heat press, and a relaxed, slightly oversized boxy fit perfectly capturing the 90s aesthetic.
-                Precision stitching across all structural seams ensures a crisp drape worn individually or layered.
+            <div class="accordion-header">Description <span class="plus-icon">+</span></div>
+            <div class="accordion-content" id="accordion-desc">
+                A Drip Nation original. Precision stitching across all structural seams ensures a crisp drape worn individually or layered.
             </div>
         </div>
     </div>
 
-    <!-- You May Also Like -->
     <section class="dn-also-like dn-reveal">
         <h2 class="dn-also-like-title">YOU MAY ALSO LIKE</h2>
         <div class="dn-also-like-grid" id="alsoLikeGrid"></div>
     </section>
 
     <script>
-        // ── 3D Carousel ──
-        const carousel = document.getElementById('productCarousel');
-        let currentRotation = 0;
-        let targetRotation = 0;
-        let isDragging = false;
-        let startX, startRotation;
-        const autoRotateSpeed = 0.35;
-        const lerpFactor = 0.08;
+        document.addEventListener('DOMContentLoaded', function () {
+            const params = new URLSearchParams(window.location.search);
+            const productId = params.get('id');
 
-        function animateCarousel() {
-            if (!isDragging) {
-                targetRotation -= autoRotateSpeed;
+            // ── Load product data ──
+            let product;
+            if (productId) {
+                product = StoreBridge.getProductById(productId);
             }
-            currentRotation += (targetRotation - currentRotation) * lerpFactor;
-            carousel.style.transform = `rotateY(${currentRotation}deg)`;
-            requestAnimationFrame(animateCarousel);
-        }
 
-        carousel.addEventListener('mousedown', (e) => {
-            isDragging = true;
-            startX = e.pageX;
-            startRotation = targetRotation;
-            carousel.style.cursor = 'grabbing';
-        });
+            // Fallback to first product if no ID or not found
+            if (!product) {
+                const allProducts = StoreBridge.getProducts();
+                product = allProducts.length > 0 ? allProducts[0] : null;
+            }
 
-        document.addEventListener('mousemove', (e) => {
-            if (!isDragging) return;
-            targetRotation = startRotation + (e.pageX - startX) * 0.8;
-        });
+            if (!product) {
+                document.getElementById('product-info').innerHTML = '<p style="color: var(--text-muted);">Product not found.</p>';
+                return;
+            }
 
-        document.addEventListener('mouseup', () => {
-            isDragging = false;
-            carousel.style.cursor = 'grab';
-        });
+            // ── Set page title ──
+            document.title = product.name + ' | Drip Nation';
+            document.getElementById('breadcrumb-cat').textContent = product.category;
+            document.getElementById('breadcrumb-name').textContent = product.name;
 
-        carousel.addEventListener('touchstart', (e) => {
-            isDragging = true;
-            startX = e.touches[0].pageX;
-            startRotation = targetRotation;
-        }, { passive: true });
-
-        document.addEventListener('touchmove', (e) => {
-            if (!isDragging) return;
-            targetRotation = startRotation + (e.touches[0].pageX - startX) * 0.8;
-        }, { passive: true });
-
-        document.addEventListener('touchend', () => {
-            isDragging = false;
-        });
-
-        animateCarousel();
-
-        // ── Accordion ──
-        function toggleAccordion(element) {
-            const content = element.querySelector('.accordion-content');
-            const icon = element.querySelector('.plus-icon');
-            if (content.classList.contains('active')) {
-                content.classList.remove('active');
-                icon.classList.remove('rotate');
+            // ── Build carousel ──
+            const carousel = document.getElementById('productCarousel');
+            
+            // Get 4 images from product.images array if available, else fallback
+            let carouselImages = [];
+            if (product.images && product.images.length === 4) {
+                carouselImages = product.images;
             } else {
-                content.classList.add('active');
-                icon.classList.add('rotate');
+                // Fallback for older products: use their main image 4 times or mix with others
+                const fallbackImg = product.image || 'assets/images/default.jpg';
+                carouselImages = [fallbackImg, fallbackImg, fallbackImg, fallbackImg];
             }
+
+            carousel.innerHTML = carouselImages.map(img =>
+                `<div class="carousel-panel" style="background-image: url('${img}');"></div>`
+            ).join('');
+
+            // ── Build info panel ──
+            const safeName = product.name.replace(/'/g, "\\'");
+            const cartPrice = product.sale || product.price;
+            const priceHTML = product.sale
+                ? `<span class="original">₹${product.price.toLocaleString('en-IN')}</span>₹${product.sale.toLocaleString('en-IN')}`
+                : `₹${product.price.toLocaleString('en-IN')}`;
+            const stockColor = product.stock < 10 ? 'color: #f87171;' : 'color: #34d399;';
+            const stockLabel = product.stock < 10 ? `Only ${product.stock} left!` : `${product.stock} in stock`;
+            const sizes = (product.sizes || 'S, M, L, XL').split(',').map(s => s.trim());
+            const primaryImage = product.images && product.images.length > 0 ? product.images[0] : product.image;
+
+            document.getElementById('product-info').innerHTML = `
+                <span class="product-info-label">[ ${product.category.toUpperCase()} ]</span>
+                <h1 class="product-info-title">${product.name}</h1>
+                ${product.desc ? `<p class="product-info-desc">${product.desc}</p>` : ''}
+                <div class="product-info-price">${priceHTML}</div>
+                ${product.sku ? `<div class="product-info-sku">SKU: ${product.sku}</div>` : ''}
+                <div class="product-info-stock" style="${stockColor}">${stockLabel}</div>
+
+                <div class="selector-label">SIZE</div>
+                <div class="size-selector">
+                    ${sizes.map((s, i) => `<button class="size-pill ${i === 0 ? 'active' : ''}" onclick="selectSize(this)">${s}</button>`).join('')}
+                </div>
+
+                <div class="product-actions">
+                    <button class="product-btn product-btn-primary"
+                        onclick="CartEngine.showComingSoonModal()">BUY NOW</button>
+                    <button class="product-btn product-btn-ghost"
+                        onclick="CartEngine.addItem('${safeName}', '${cartPrice}', '${primaryImage}')">ADD TO BAG</button>
+                </div>
+            `;
+
+            if (product.desc) {
+                document.getElementById('accordion-desc').textContent = product.desc;
+            }
+            if (product.material) {
+                document.getElementById('accordion-material').textContent = product.material;
+            }
+
+            // ── 3D Carousel Animation ──
+            let currentRotation = 0, targetRotation = 0, isDragging = false, startX, startRotation;
+            function animateCarousel() {
+                if (!isDragging) targetRotation -= 0.35;
+                currentRotation += (targetRotation - currentRotation) * 0.08;
+                carousel.style.transform = `rotateY(${currentRotation}deg)`;
+                requestAnimationFrame(animateCarousel);
+            }
+            carousel.addEventListener('mousedown', e => { isDragging = true; startX = e.pageX; startRotation = targetRotation; });
+            document.addEventListener('mousemove', e => { if (isDragging) targetRotation = startRotation + (e.pageX - startX) * 0.8; });
+            document.addEventListener('mouseup', () => { isDragging = false; });
+            carousel.addEventListener('touchstart', e => { isDragging = true; startX = e.touches[0].pageX; startRotation = targetRotation; }, { passive: true });
+            document.addEventListener('touchmove', e => { if (isDragging) targetRotation = startRotation + (e.touches[0].pageX - startX) * 0.8; }, { passive: true });
+            document.addEventListener('touchend', () => { isDragging = false; });
+            animateCarousel();
+
+            // ── "You May Also Like" ──
+            const allProducts = StoreBridge.getProducts().filter(p => p.id !== product.id);
+            const shuffled = allProducts.sort(() => Math.random() - 0.5).slice(0, 4);
+            document.getElementById('alsoLikeGrid').innerHTML = shuffled.map(p => StoreBridge.renderProductCard(p)).join('');
+        });
+
+        function toggleAccordion(el) {
+            const content = el.querySelector('.accordion-content');
+            const icon = el.querySelector('.plus-icon');
+            content.classList.toggle('active');
+            icon.classList.toggle('rotate');
         }
 
-        // ── Size / Color Selectors ──
         function selectSize(el) {
             document.querySelectorAll('.size-pill').forEach(p => p.classList.remove('active'));
             el.classList.add('active');
         }
-
-        function selectColor(el) {
-            document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('active'));
-            el.classList.add('active');
-        }
-
-        // ── You May Also Like ──
-        const alsoLikeGrid = document.getElementById('alsoLikeGrid');
-        const alsoLikeProducts = [
-            { name: 'Vintage Milan \'92', price: '2,499', img: 'assets/images/i3 (2).jpeg' },
-            { name: 'Shadow Bomber', price: '3,999', img: 'assets/images/jackets.jpeg' },
-            { name: 'Eclipse Training Kit', price: '2,799', img: 'assets/images/track and suit.jpeg' },
-            { name: 'Onyx Wristband', price: '599', img: 'assets/images/accessories.jpeg' }
-        ];
-
-        alsoLikeProducts.forEach(p => {
-            const card = document.createElement('div');
-            card.className = 'dn-product-card';
-            card.onclick = () => window.location.href = 'product.html';
-            card.innerHTML = `
-                <div class="dn-product-card-image" style="background-image: url('${p.img}');"></div>
-                <div class="dn-product-card-info">
-                    <span class="dn-product-card-name">${p.name}</span>
-                    <span class="dn-product-card-price">₹ ${p.price}</span>
-                </div>
-                <div class="dn-product-card-actions">
-                    <button class="dn-add-cart-btn" onclick="event.stopPropagation(); CartEngine.addItem('${p.name}', '${p.price.replace(/,/g, '')}', '${p.img}')">+ ADD</button>
-                </div>
-            `;
-            alsoLikeGrid.appendChild(card);
-        });
     </script>
 </body>
 
