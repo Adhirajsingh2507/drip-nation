@@ -8,6 +8,8 @@
     <meta name="description" content="View product details at Drip Nation. Premium streetwear.">
     <link rel="stylesheet" href="assets/css/styles.css">
     <script src="assets/js/cart.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+    <script src="assets/js/supabase-client.js" defer></script>
     <script src="assets/js/store-bridge.js" defer></script>
     <style>
         .product-page { padding-top: 70px; }
@@ -159,20 +161,25 @@
     </section>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function () {
+        document.addEventListener('DOMContentLoaded', async function () {
             const params = new URLSearchParams(window.location.search);
             const productId = params.get('id');
 
-            // ── Load product data ──
-            let product;
-            if (productId) {
-                product = StoreBridge.getProductById(productId);
-            }
-
-            // Fallback to first product if no ID or not found
-            if (!product) {
-                const allProducts = StoreBridge.getProducts();
-                product = allProducts.length > 0 ? allProducts[0] : null;
+            // ── Load product data (Supabase) ──
+            let product = null;
+            try {
+                if (productId) {
+                    product = await StoreBridge.getProductById(productId);
+                }
+                // Fallback to first product if no ID or not found
+                if (!product) {
+                    const allProducts = await StoreBridge.getProducts();
+                    product = allProducts.length > 0 ? allProducts[0] : null;
+                }
+            } catch (e) {
+                console.error('[DripNation] product load failed', e);
+                document.getElementById('product-info').innerHTML = '<p style="color: var(--text-muted);">Could not load product. Please refresh.</p>';
+                return;
             }
 
             if (!product) {
@@ -258,9 +265,13 @@
             animateCarousel();
 
             // ── "You May Also Like" ──
-            const allProducts = StoreBridge.getProducts().filter(p => p.id !== product.id);
-            const shuffled = allProducts.sort(() => Math.random() - 0.5).slice(0, 4);
-            document.getElementById('alsoLikeGrid').innerHTML = shuffled.map(p => StoreBridge.renderProductCard(p)).join('');
+            try {
+                const allProducts = (await StoreBridge.getProducts()).filter(p => p.id !== product.id);
+                const shuffled = allProducts.sort(() => Math.random() - 0.5).slice(0, 4);
+                document.getElementById('alsoLikeGrid').innerHTML = shuffled.map(p => StoreBridge.renderProductCard(p)).join('');
+            } catch (e) {
+                console.error('[DripNation] also-like load failed', e);
+            }
         });
 
         function toggleAccordion(el) {

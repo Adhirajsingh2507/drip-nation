@@ -1,11 +1,20 @@
 // ============================================================
 // DRIP NATION — Store Bridge
-// Reads admin-panel localStorage data and drives storefront pages.
-// Include this file on every storefront page AFTER cart.js.
+// Reads the catalog from Supabase (source of truth) and drives storefront pages.
+// Include on every storefront page AFTER cart.js, supabase-js, and supabase-client.js.
+//
+// Getters are ASYNC (they hit Supabase). Callers must await them.
+// Row shapes are mapped back to the original localStorage shape so page-level
+// rendering code is unchanged (product.category = name, sizes = "S, M, L, XL"
+// string, product.desc, etc.).
+//
+// Kill-switch: window.DN_CONFIG.useSupabase = false falls back to the original
+// localStorage prototype path (ensureDefaults) so a bad deploy degrades instead
+// of breaking the store.
 // ============================================================
 
 const StoreBridge = {
-    // Storage keys (must match admin.html)
+    // Storage keys (must match admin.html) — used only by the localStorage fallback
     KEYS: {
         categories: 'dn_categories',
         products: 'dn_products',
@@ -14,40 +23,98 @@ const StoreBridge = {
         cms: 'dn_cms'
     },
 
-    // ── Getters ──
-    getCategories: function () {
+    _useSb: function () {
+        return !!(window.DN_CONFIG && window.DN_CONFIG.useSupabase && window.dnSupabase);
+    },
+
+    // ── Row → legacy-shape mappers ──
+    _mapCategory: function (r) {
+        return { id: r.id, name: r.name, slug: r.slug, image: r.image, desc: r.description || '', status: r.status };
+    },
+    _mapProduct: function (r) {
+        return {
+            id: r.id,
+            name: r.name,
+            category: r.categories ? r.categories.name : '',
+            price: r.price,
+            sale: r.sale,                                   // null = not on sale (falsy, like the old '')
+            stock: r.stock,
+            sizes: Array.isArray(r.sizes) ? r.sizes.join(', ') : (r.sizes || ''),  // page code does .split(',')
+            sku: r.sku,
+            images: r.images || [],
+            material: r.material || '',
+            desc: r.description || ''
+        };
+    },
+    _mapPromo: function (r) {
+        return {
+            code: r.code, type: r.type, value: r.value,
+            minOrder: r.min_order, maxUses: r.max_uses, used: r.used,
+            expiry: r.expiry, status: r.status
+        };
+    },
+
+    // ── Getters (async) ──
+    getCategories: async function () {
+        if (this._useSb()) {
+            const { data, error } = await window.dnSupabase
+                .from('categories').select('*').eq('status', 'Active').order('id');
+            if (error) { console.error('[DripNation] getCategories', error); throw error; }
+            return data.map(r => this._mapCategory(r));
+        }
+        this.ensureDefaults();
         return JSON.parse(localStorage.getItem(this.KEYS.categories)) || [];
     },
 
-    getProducts: function () {
+    getProducts: async function () {
+        if (this._useSb()) {
+            const { data, error } = await window.dnSupabase
+                .from('products').select('*, categories(name)').eq('status', 'Active').order('id');
+            if (error) { console.error('[DripNation] getProducts', error); throw error; }
+            return data.map(r => this._mapProduct(r));
+        }
+        this.ensureDefaults();
         return JSON.parse(localStorage.getItem(this.KEYS.products)) || [];
     },
 
-    getProductsByCategory: function (categoryName) {
-        return this.getProducts().filter(
-            p => p.category.toLowerCase() === categoryName.toLowerCase()
-        );
+    getProductsByCategory: async function (categoryName) {
+        const all = await this.getProducts();
+        return all.filter(p => p.category.toLowerCase() === String(categoryName).toLowerCase());
     },
 
-    getProductById: function (id) {
-        return this.getProducts().find(p => p.id === parseInt(id));
+    getProductById: async function (id) {
+        if (this._useSb()) {
+            const { data, error } = await window.dnSupabase
+                .from('products').select('*, categories(name)').eq('id', id).maybeSingle();
+            if (error) { console.error('[DripNation] getProductById', error); throw error; }
+            return data ? this._mapProduct(data) : null;
+        }
+        this.ensureDefaults();
+        return (JSON.parse(localStorage.getItem(this.KEYS.products)) || []).find(p => p.id === parseInt(id)) || null;
     },
 
-    getCategoryBySlug: function (slug) {
-        return this.getCategories().find(c => c.slug === slug);
+    getCategoryBySlug: async function (slug) {
+        return (await this.getCategories()).find(c => c.slug === slug) || null;
     },
 
-    getPromos: function () {
+    getPromos: async function () {
+        if (this._useSb()) {
+            const { data, error } = await window.dnSupabase
+                .from('promos').select('*').eq('status', 'Active');
+            if (error) { console.error('[DripNation] getPromos', error); throw error; }
+            return data.map(r => this._mapPromo(r));
+        }
         return JSON.parse(localStorage.getItem(this.KEYS.promos)) || [];
     },
 
+    // CMS is not in the DB schema; storefront pages don't read it. Kept for compat.
     getCMS: function () {
         return JSON.parse(localStorage.getItem(this.KEYS.cms)) || {};
     },
 
-    // ── Validate Promo Code ──
-    validatePromo: function (code, cartTotal) {
-        const promos = this.getPromos();
+    // ── Validate Promo Code (client-side UX only; re-validated server-side in Phase 5) ──
+    validatePromo: async function (code, cartTotal) {
+        const promos = await this.getPromos();
         const promo = promos.find(
             p => p.code.toUpperCase() === code.toUpperCase() && p.status === 'Active'
         );
@@ -78,7 +145,33 @@ const StoreBridge = {
         return { valid: true, discount, label, type: promo.type, code: promo.code };
     },
 
-    // ── Seed default data if admin never visited ──
+    // ── Render product card HTML (pure; unchanged) ──
+    renderProductCard: function (product) {
+        const priceDisplay = product.sale
+            ? `<span style="text-decoration:line-through;color:var(--text-muted);margin-right:8px;">₹${product.price.toLocaleString('en-IN')}</span>₹${product.sale.toLocaleString('en-IN')}`
+            : `₹${product.price.toLocaleString('en-IN')}`;
+        const cartPrice = product.sale || product.price;
+        const safeName = product.name.replace(/'/g, "\\'");
+
+        // Handle migration from old 'image' property
+        const primaryImage = product.images && product.images.length > 0 ? product.images[0] : (product.image || 'assets/images/default.jpg');
+
+        return `
+            <div class="dn-product-card" onclick="window.location.href='product.html?id=${product.id}'">
+                <div class="dn-product-card-image" style="background-image: url('${primaryImage}');"></div>
+                <div class="dn-product-card-info">
+                    <span class="dn-product-card-name">${product.name}</span>
+                    <span class="dn-product-card-price">${priceDisplay}</span>
+                </div>
+                <div class="dn-product-card-actions">
+                    <button class="dn-add-cart-btn" onclick="event.stopPropagation(); CartEngine.addItem('${safeName}', '${cartPrice}', '${primaryImage}')">+ ADD</button>
+                </div>
+            </div>
+        `;
+    },
+
+    // ── Seed default data for the localStorage FALLBACK path only ──
+    // (No longer auto-runs. Only invoked when useSupabase is false / client missing.)
     ensureDefaults: function () {
         if (!localStorage.getItem(this.KEYS.categories)) {
             localStorage.setItem(this.KEYS.categories, JSON.stringify([
@@ -130,13 +223,13 @@ const StoreBridge = {
                     const img2 = allImages[(i + 1) % allImages.length];
                     const img3 = allImages[(i + 2) % allImages.length];
                     const img4 = allImages[(i + 3) % allImages.length];
-                    
+
                     defaultProducts.push({
                         id, name, category,
                         price: Math.floor(Math.random() * (priceMax - priceMin + 1)) + priceMin,
                         sale: '', stock: Math.floor(Math.random() * 80) + 5,
                         sizes: 'S, M, L, XL', sku: 'DN-' + id,
-                        images: [img1, img2, img3, img4], 
+                        images: [img1, img2, img3, img4],
                         material: material,
                         desc: ''
                     });
@@ -158,33 +251,5 @@ const StoreBridge = {
                 { code: 'FREESHIP', type: 'shipping', value: 0, minOrder: 999, maxUses: 0, used: 156, expiry: '', status: 'Active' }
             ]));
         }
-    },
-
-    // ── Render product card HTML ──
-    renderProductCard: function (product) {
-        const priceDisplay = product.sale
-            ? `<span style="text-decoration:line-through;color:var(--text-muted);margin-right:8px;">₹${product.price.toLocaleString('en-IN')}</span>₹${product.sale.toLocaleString('en-IN')}`
-            : `₹${product.price.toLocaleString('en-IN')}`;
-        const cartPrice = product.sale || product.price;
-        const safeName = product.name.replace(/'/g, "\\'");
-        
-        // Handle migration from old 'image' property
-        const primaryImage = product.images && product.images.length > 0 ? product.images[0] : (product.image || 'assets/images/default.jpg');
-
-        return `
-            <div class="dn-product-card" onclick="window.location.href='product.html?id=${product.id}'">
-                <div class="dn-product-card-image" style="background-image: url('${primaryImage}');"></div>
-                <div class="dn-product-card-info">
-                    <span class="dn-product-card-name">${product.name}</span>
-                    <span class="dn-product-card-price">${priceDisplay}</span>
-                </div>
-                <div class="dn-product-card-actions">
-                    <button class="dn-add-cart-btn" onclick="event.stopPropagation(); CartEngine.addItem('${safeName}', '${cartPrice}', '${primaryImage}')">+ ADD</button>
-                </div>
-            </div>
-        `;
     }
 };
-
-// Auto-seed on load
-StoreBridge.ensureDefaults();

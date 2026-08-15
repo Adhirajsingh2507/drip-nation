@@ -8,6 +8,8 @@
     <meta name="description" content="Browse all Drip Nation categories — dynamically managed from the admin panel.">
     <link rel="stylesheet" href="assets/css/styles.css">
     <script src="assets/js/cart.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+    <script src="assets/js/supabase-client.js" defer></script>
     <script src="assets/js/store-bridge.js" defer></script>
     <style>
         .shop-body { padding-top: 80px; }
@@ -103,12 +105,25 @@
     </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const categories = StoreBridge.getCategories();
+        document.addEventListener('DOMContentLoaded', async function () {
             const grid = document.getElementById('shop-grid');
-            const products = StoreBridge.getProducts();
+            const label = document.getElementById('cat-count-label');
+            label.textContent = '[ LOADING… ]';
 
-            document.getElementById('cat-count-label').textContent = `[ ${categories.length} COLLECTIONS ]`;
+            let categories = [], products = [];
+            try {
+                [categories, products] = await Promise.all([
+                    StoreBridge.getCategories(),
+                    StoreBridge.getProducts()
+                ]);
+            } catch (e) {
+                console.error('[DripNation] shop load failed', e);
+                label.textContent = '[ COULD NOT LOAD ]';
+                grid.innerHTML = '<p style="color:var(--text-muted);padding:40px 0;">Could not load collections. Please refresh.</p>';
+                return;
+            }
+
+            label.textContent = `[ ${categories.length} COLLECTIONS ]`;
 
             grid.innerHTML = categories.map(cat => {
                 const count = products.filter(p => p.category.toLowerCase() === cat.name.toLowerCase()).length;

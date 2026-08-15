@@ -8,6 +8,8 @@
     <meta name="description" content="Review your bag at Drip Nation.">
     <link rel="stylesheet" href="assets/css/styles.css">
     <script src="assets/js/cart.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+    <script src="assets/js/supabase-client.js" defer></script>
     <script src="assets/js/store-bridge.js" defer></script>
     <style>
         .cart-page { padding-top: 80px; }
@@ -252,13 +254,21 @@
             }
         }
 
-        function applyPromo() {
+        async function applyPromo() {
             const code = document.getElementById('promoInput').value.trim();
             const msgEl = document.getElementById('promo-msg');
             if (!code) { msgEl.innerHTML = '<span class="promo-msg error">Enter a promo code.</span>'; return; }
 
             const subtotal = CartEngine.getTotal();
-            const result = StoreBridge.validatePromo(code, subtotal);
+            msgEl.innerHTML = '<span class="promo-msg">Checking…</span>';
+            let result;
+            try {
+                result = await StoreBridge.validatePromo(code, subtotal);
+            } catch (e) {
+                console.error('[DripNation] promo validation failed', e);
+                msgEl.innerHTML = '<span class="promo-msg error">Could not validate code. Please try again.</span>';
+                return;
+            }
 
             if (!result.valid) {
                 msgEl.innerHTML = `<span class="promo-msg error">${result.message}</span>`;

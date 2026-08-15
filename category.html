@@ -8,6 +8,8 @@
     <meta name="description" content="Browse this collection at Drip Nation. Premium streetwear catalog.">
     <link rel="stylesheet" href="assets/css/styles.css">
     <script src="assets/js/cart.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+    <script src="assets/js/supabase-client.js" defer></script>
     <script src="assets/js/store-bridge.js" defer></script>
 </head>
 
@@ -50,7 +52,7 @@
     </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function () {
+        document.addEventListener('DOMContentLoaded', async function () {
             // ── Read URL params ──
             const params = new URLSearchParams(window.location.search);
             const slug = params.get('slug');
@@ -61,17 +63,22 @@
             document.getElementById('breadcrumb-name').textContent = categoryName;
             document.getElementById('hero-title').textContent = categoryName.toUpperCase();
 
-            // ── Find category data ──
-            const category = StoreBridge.getCategories().find(c =>
-                c.slug === slug || c.name.toLowerCase() === categoryName.toLowerCase()
-            );
+            // ── Find category + load products (Supabase) ──
+            let category = null, allProducts = [];
+            try {
+                const cats = await StoreBridge.getCategories();
+                category = cats.find(c => c.slug === slug || c.name.toLowerCase() === categoryName.toLowerCase());
+                allProducts = await StoreBridge.getProductsByCategory(categoryName);
+            } catch (e) {
+                console.error('[DripNation] category load failed', e);
+                document.getElementById('hero-subtitle').textContent = 'COULD NOT LOAD COLLECTION';
+                document.getElementById('emptyState').style.display = 'block';
+                return;
+            }
 
             if (category) {
                 document.getElementById('hero-bg').style.backgroundImage = `url('${category.image}')`;
             }
-
-            // ── Load products ──
-            let allProducts = StoreBridge.getProductsByCategory(categoryName);
 
             document.getElementById('hero-subtitle').textContent =
                 (category?.desc || 'PREMIUM COLLECTION').toUpperCase() + ' · ' + allProducts.length + ' PIECES';
