@@ -389,6 +389,7 @@
             <div class="nav-link" data-tab="activity">Activity Log</div>
 
             <div class="sidebar-section-title">Administration</div>
+            <div class="nav-link" data-tab="users">Users</div>
             <div class="nav-link" data-tab="settings">Settings</div>
         </nav>
         <div class="sidebar-footer">
@@ -540,6 +541,18 @@
                 </div>
             </div>
             <div id="full-activity" style="display: flex; flex-direction: column; gap: 16px;"></div>
+        </section>
+
+        <!-- ━━━━━━━━━━━━━━━━━ USERS ━━━━━━━━━━━━━━━━━ -->
+        <section id="tab-users" class="tab">
+            <div class="page-header">
+                <div class="page-header-left"><h2>Users</h2></div>
+                <div class="page-header-actions"><button class="btn btn-ghost" onclick="renderAll()">Refresh</button></div>
+            </div>
+            <table class="tbl">
+                <thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Role</th><th>Joined</th></tr></thead>
+                <tbody id="tbl-users"></tbody>
+            </table>
         </section>
 
         <!-- ━━━━━━━━━━━━━━━━━ SETTINGS ━━━━━━━━━━━━━━━━━ -->
@@ -822,15 +835,17 @@
         }
 
         async function renderAll() {
-            let cats, prods, promos, orders;
+            let cats, prods, promos, orders, profiles, admins;
             try {
-                [cats, prods, promos, orders] = await Promise.all([
+                [cats, prods, promos, orders, profiles, admins] = await Promise.all([
                     sb.from('categories').select('*').order('id'),
                     sb.from('products').select('*, categories(name)').order('id'),
                     sb.from('promos').select('*').order('id'),
-                    sb.from('orders').select('*').order('created_at', { ascending: false })
+                    sb.from('orders').select('*').order('created_at', { ascending: false }),
+                    sb.from('profiles').select('*').order('created_at', { ascending: false }),
+                    sb.from('admins').select('id')
                 ]);
-                for (const r of [cats, prods, promos, orders]) if (r.error) throw r.error;
+                for (const r of [cats, prods, promos, orders, profiles, admins]) if (r.error) throw r.error;
             } catch (e) {
                 console.error('[admin] load failed', e);
                 toast('Failed to load data: ' + (e.message || e));
@@ -874,6 +889,14 @@
                 <tr><td>${esc(p.code)}</td><td>${p.type}</td><td>${p.value}</td><td>${p.used}</td>
                 <td><button class="btn btn-danger btn-sm" onclick="deletePromo(${p.id})">Delete</button></td></tr>
             `).join('') || '<tr><td colspan="5" class="tbl-empty">No promos found</td></tr>';
+
+            // Users (profiles + which are admins)
+            const adminIds = new Set((admins.data || []).map(a => a.id));
+            document.getElementById('tbl-users').innerHTML = (profiles.data || []).map(u => `
+                <tr><td>${esc(u.full_name || '—')}</td><td>${esc(u.email || '')}</td><td>${esc(u.phone || '—')}</td>
+                <td><span class="badge">${adminIds.has(u.id) ? 'Admin' : 'User'}</span></td>
+                <td style="color:var(--muted);">${fmtDate(u.created_at)}</td></tr>
+            `).join('') || '<tr><td colspan="5" class="tbl-empty">No users yet</td></tr>';
 
             // Activity (local)
             const activity = JSON.parse(localStorage.getItem(ACT_KEY)) || [];
