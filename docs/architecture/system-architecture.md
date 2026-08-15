@@ -109,16 +109,56 @@ flowchart LR
 
 ```mermaid
 erDiagram
-    categories ||--o{ products : has
+    categories ||--o{ products : "has"
     products   ||--o{ order_items : "snapshotted into"
-    orders     ||--o{ order_items : contains
-    promos     }o..o{ orders : "applied to (by code)"
+    orders     ||--o{ order_items : "contains"
+    promos     ||..o{ orders : "by code (soft link, no FK)"
 
-    categories { bigint id PK; text name; text slug; text status }
-    products   { bigint id PK; bigint category_id FK; int price; int sale; int stock; text_arr sizes; text status }
-    promos     { bigint id PK; text code; text type; int value; int min_order; int max_uses; int used; date expiry }
-    orders     { uuid id PK; text customer_name; jsonb address; int subtotal; int discount; int total; text payment; text fulfillment }
-    order_items { bigint id PK; uuid order_id FK; bigint product_id FK; text name; int price; text size; int quantity }
+    categories {
+        bigint id PK
+        text name
+        text slug
+        text status
+    }
+    products {
+        bigint id PK
+        bigint category_id FK
+        int price
+        int sale
+        int stock
+        text_array sizes
+        text status
+    }
+    promos {
+        bigint id PK
+        text code
+        text type
+        int value
+        int min_order
+        int max_uses
+        int used
+        date expiry
+    }
+    orders {
+        uuid id PK
+        text customer_name
+        jsonb address
+        int subtotal
+        int discount
+        int total
+        text promo_code
+        text payment
+        text fulfillment
+    }
+    order_items {
+        bigint id PK
+        uuid order_id FK
+        bigint product_id FK
+        text name
+        int price
+        text size
+        int quantity
+    }
 ```
 
 Key decisions already baked in:
