@@ -176,8 +176,8 @@ Key decisions already baked in:
 | Item | Status | Target |
 |---|---|---|
 | `orders`/`order_items` INSERT | ✅ **Closed (migration `0002`)** — anon INSERT policies dropped; tables fail-closed, verified anon `POST /orders` → `42501 RLS` | Order creation only via the service-role `checkout` Edge Function (bypasses RLS) |
-| Stock decrement | ⬜ Open — `greatest(0, stock - qty)`, not oversell-safe under concurrency | `SELECT … FOR UPDATE` / atomic conditional update inside the function's transaction (migration `0003`) |
-| Promo usage | ⬜ Open — client counter today | Atomic `update … set used = used + 1 where used < max_uses` server-side (migration `0003`) |
+| Stock decrement | ⬜ Open — `greatest(0, stock - qty)`, not oversell-safe under concurrency | `SELECT … FOR UPDATE` / atomic conditional update inside the function's transaction (migration `0006`) |
+| Promo usage | ⬜ Open — client counter today | Atomic `update … set used = used + 1 where used < max_uses` server-side (migration `0006`) |
 
 ---
 

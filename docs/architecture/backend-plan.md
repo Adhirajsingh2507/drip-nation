@@ -91,10 +91,10 @@ The core commerce phase. Split into reviewable sub-steps. **Detailed design draf
   policies on `orders`/`order_items`. Tables are now fail-closed; only the
   service-role Edge Function (which bypasses RLS) writes authoritative orders.
   Verified: anon `POST /orders` → `42501 row violates RLS`.
-- ⬜ **Migration `0003` (ships with the Edge Function):** make stock decrement
+- ⬜ **Migration `0006` (ships with the Edge Function):** make stock decrement
   oversell-safe — atomic conditional update / `FOR UPDATE` inside the checkout
   transaction, replacing `greatest(0, stock - qty)`.
-- ⬜ **Migration `0003`:** atomic promo usage —
+- ⬜ **Migration `0006`:** atomic promo usage —
   `update promos set used = used + 1 where code = $1 and (max_uses = 0 or used < max_uses)`.
 - **Gate:** anon INSERT into `orders` rejected (done); concurrent checkout test
   does not oversell (pending `0003`).

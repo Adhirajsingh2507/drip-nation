@@ -57,7 +57,7 @@ flowchart LR
 - **No server yet** — this is a pure client refactor, shippable alone.
 - **Gate:** adding two sizes of the same product yields two cart lines, each carrying `product_id`.
 
-### 5.1 — Migration `0005` (schema + atomic functions)
+### 5.1 — Migration `0006` (schema + atomic functions)
 ```sql
 -- Razorpay linkage + idempotency
 alter table orders
@@ -213,4 +213,4 @@ in the Razorpay dashboard pointing at the deployed function URL with the same se
 Highest-risk phase in the project. Recommended flow per the contract:
 **architect → implement → tests (failure-first) → security review → code review.**
 Each sub-phase (5.0–5.5) is independently reviewable; 5.1/5.2/5.4 are the security-critical
-ones. Nothing here is implemented yet — this is the draft to review before writing `0005`.
+ones. Nothing here is implemented yet — this is the draft to review before writing `0006`.
