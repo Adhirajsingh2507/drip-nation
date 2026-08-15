@@ -4,188 +4,91 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Drip Nation | Shop Categories</title>
-    <meta name="description" content="Browse all Drip Nation categories — Retro Jerseys, Accessories, Jackets, and Track Suits.">
+    <title>Shop | Drip Nation</title>
+    <meta name="description" content="Browse all Drip Nation categories — dynamically managed from the admin panel.">
     <link rel="stylesheet" href="assets/css/styles.css">
-    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@200;300;400&family=Outfit:wght@300;500;700&display=swap" rel="stylesheet">
     <script src="assets/js/cart.js" defer></script>
+    <script src="assets/js/store-bridge.js" defer></script>
     <style>
-        .shop-body {
-            padding-top: 80px;
-        }
-
+        .shop-body { padding-top: 80px; }
         .shop-heading {
-            font-family: var(--font-display);
-            font-weight: 400;
-            font-size: clamp(3.5rem, 8vw, 6rem);
-            letter-spacing: 0.05em;
-            text-transform: uppercase;
-            margin: 0 40px 10px 40px;
-            line-height: 0.9;
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            font-weight: 800; font-size: clamp(3.5rem, 8vw, 6rem);
+            letter-spacing: 0.05em; text-transform: uppercase;
+            margin: 0 40px 10px 40px; line-height: 0.9;
         }
-
         .shop-subheading {
-            font-family: var(--font-body);
-            font-size: 0.7rem;
-            font-weight: 200;
-            letter-spacing: 0.25em;
-            text-transform: uppercase;
-            color: var(--text-muted);
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            font-size: 0.7rem; font-weight: 300; letter-spacing: 0.25em;
+            text-transform: uppercase; color: var(--text-muted);
             margin: 0 40px 40px 40px;
         }
-
         .shop-grid {
-            width: 100%;
-            max-width: 1400px;
-            margin: 0 auto;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-            padding: 0 40px 80px 40px;
+            width: 100%; max-width: 1400px; margin: 0 auto;
+            display: flex; flex-direction: column; gap: 20px; padding: 0 40px 80px 40px;
         }
-
         .shop-card {
-            position: relative;
-            width: 100%;
-            height: clamp(220px, 30vh, 380px);
-            background-color: transparent;
-            border-radius: 16px;
-            overflow: hidden;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            cursor: pointer;
-            text-decoration: none;
-            border: 1px solid var(--glass-border);
-            box-shadow: var(--glass-shadow);
+            position: relative; width: 100%; height: clamp(220px, 30vh, 380px);
+            border-radius: 16px; overflow: hidden; display: flex;
+            align-items: center; justify-content: space-between;
+            cursor: pointer; text-decoration: none;
+            border: 1px solid var(--glass-border); box-shadow: var(--glass-shadow);
             transition: transform var(--transition-smooth), border-color var(--transition-ease);
         }
-
-        .shop-card:hover {
-            transform: translateY(-5px);
-            border-color: var(--glass-border-hover);
-        }
-
+        .shop-card:hover { transform: translateY(-5px); border-color: var(--glass-border-hover); }
         .shop-card-bg {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-size: cover;
-            background-position: center;
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background-size: cover; background-position: center;
             filter: grayscale(100%) contrast(1.1) brightness(0.5);
-            transition: filter 0.8s cubic-bezier(0.19, 1, 0.22, 1);
-            z-index: 0;
+            transition: filter 0.8s cubic-bezier(0.19, 1, 0.22, 1); z-index: 0;
         }
-
-        .shop-card:hover .shop-card-bg {
-            filter: grayscale(0%) contrast(1.05) brightness(0.7);
-        }
-
+        .shop-card:hover .shop-card-bg { filter: grayscale(0%) contrast(1.05) brightness(0.7); }
         .shop-card-glass {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(135deg, rgba(0, 0, 0, 0.55) 0%, rgba(0, 0, 0, 0.15) 100%);
-            backdrop-filter: blur(3px);
-            -webkit-backdrop-filter: blur(3px);
-            z-index: 1;
-            pointer-events: none;
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(135deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.15) 100%);
+            backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px);
+            z-index: 1; pointer-events: none;
         }
-
         .shop-card-content {
-            position: relative;
-            z-index: 2;
-            width: 100%;
-            height: 100%;
-            display: flex;
-            align-items: flex-end;
-            justify-content: space-between;
-            padding: 30px;
+            position: relative; z-index: 2; width: 100%; height: 100%;
+            display: flex; align-items: flex-end; justify-content: space-between; padding: 30px;
         }
-
         .shop-card-title {
-            font-family: var(--font-display);
-            font-size: clamp(2rem, 5vw, 3.5rem);
-            font-weight: 400;
-            letter-spacing: 0.05em;
-            text-transform: uppercase;
-            color: var(--primary);
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            font-size: clamp(2rem, 5vw, 3.5rem); font-weight: 700;
+            letter-spacing: 0.05em; text-transform: uppercase; color: var(--primary);
         }
-
         .shop-card-arrow {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            width: 44px;
-            height: 44px;
-            border: 1px dotted var(--text-muted);
-            border-radius: 50%;
-            font-size: 1rem;
-            color: var(--primary);
-            transition: transform var(--transition-ease), border-color var(--transition-ease);
-            flex-shrink: 0;
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 44px; height: 44px; border: 1px dotted var(--text-muted);
+            border-radius: 50%; font-size: 1rem; color: var(--primary);
+            transition: transform var(--transition-ease), border-color var(--transition-ease); flex-shrink: 0;
         }
-
-        .shop-card:hover .shop-card-arrow {
-            transform: translate(6px, -6px);
-            border-color: var(--primary);
-        }
-
+        .shop-card:hover .shop-card-arrow { transform: translate(6px, -6px); border-color: var(--primary); }
         .shop-card-count {
-            position: absolute;
-            top: 25px;
-            right: 30px;
-            font-family: var(--font-body);
-            font-size: 0.6rem;
-            font-weight: 200;
-            letter-spacing: 0.2em;
-            text-transform: uppercase;
-            color: var(--text-muted);
-            z-index: 2;
+            position: absolute; top: 25px; right: 30px;
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            font-size: 0.6rem; font-weight: 300; letter-spacing: 0.2em;
+            text-transform: uppercase; color: var(--text-muted); z-index: 2;
         }
-
+        .shop-card-desc {
+            position: absolute; top: 25px; left: 30px;
+            font-size: 0.65rem; font-weight: 300; letter-spacing: 0.15em;
+            text-transform: uppercase; color: rgba(255,255,255,0.5); z-index: 2;
+        }
         @media (max-width: 768px) {
-            .shop-body {
-                padding-top: 60px;
-            }
-
-            .shop-heading {
-                margin: 0 20px 8px 20px;
-            }
-
-            .shop-subheading {
-                margin: 0 20px 25px 20px;
-            }
-
-            .shop-grid {
-                padding: 0 15px 60px 15px;
-                gap: 12px;
-            }
-
-            .shop-card {
-                height: 28vh;
-                border-radius: 10px;
-            }
-
-            .shop-card-content {
-                padding: 20px;
-            }
-
-            .shop-card-arrow {
-                width: 34px;
-                height: 34px;
-                font-size: 0.7rem;
-            }
+            .shop-body { padding-top: 60px; }
+            .shop-heading { margin: 0 20px 8px 20px; }
+            .shop-subheading { margin: 0 20px 25px 20px; }
+            .shop-grid { padding: 0 15px 60px 15px; gap: 12px; }
+            .shop-card { height: 28vh; border-radius: 10px; }
+            .shop-card-content { padding: 20px; }
+            .shop-card-arrow { width: 34px; height: 34px; font-size: 0.7rem; }
         }
     </style>
 </head>
 
 <body class="shop-body">
-    <!-- Breadcrumbs -->
     <nav class="dn-breadcrumbs">
         <a href="index.html">Home</a>
         <span class="separator">/</span>
@@ -193,49 +96,37 @@
     </nav>
 
     <h1 class="shop-heading">Categories</h1>
-    <p class="shop-subheading">[ SELECT A COLLECTION ]</p>
+    <p class="shop-subheading" id="cat-count-label">[ SELECT A COLLECTION ]</p>
 
-    <div class="shop-grid">
-        <a href="retro-jersey.html" class="shop-card dn-reveal">
-            <div class="shop-card-bg" style="background-image: url('assets/images/retro jerseys.jpeg');"></div>
-            <div class="shop-card-glass"></div>
-            <span class="shop-card-count">30 PIECES</span>
-            <div class="shop-card-content">
-                <span class="shop-card-title">Retro Jersey</span>
-                <span class="shop-card-arrow">↗</span>
-            </div>
-        </a>
-
-        <a href="accessories.html" class="shop-card dn-reveal">
-            <div class="shop-card-bg" style="background-image: url('assets/images/accessories.jpeg');"></div>
-            <div class="shop-card-glass"></div>
-            <span class="shop-card-count">30 PIECES</span>
-            <div class="shop-card-content">
-                <span class="shop-card-title">Accessories</span>
-                <span class="shop-card-arrow">↗</span>
-            </div>
-        </a>
-
-        <a href="jackets.html" class="shop-card dn-reveal">
-            <div class="shop-card-bg" style="background-image: url('assets/images/jackets.jpeg');"></div>
-            <div class="shop-card-glass"></div>
-            <span class="shop-card-count">30 PIECES</span>
-            <div class="shop-card-content">
-                <span class="shop-card-title">Jackets</span>
-                <span class="shop-card-arrow">↗</span>
-            </div>
-        </a>
-
-        <a href="track-and-suit.html" class="shop-card dn-reveal">
-            <div class="shop-card-bg" style="background-image: url('assets/images/track and suit.jpeg');"></div>
-            <div class="shop-card-glass"></div>
-            <span class="shop-card-count">30 PIECES</span>
-            <div class="shop-card-content">
-                <span class="shop-card-title">Track & Suit</span>
-                <span class="shop-card-arrow">↗</span>
-            </div>
-        </a>
+    <div class="shop-grid" id="shop-grid">
+        <!-- Rendered by JS -->
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const categories = StoreBridge.getCategories();
+            const grid = document.getElementById('shop-grid');
+            const products = StoreBridge.getProducts();
+
+            document.getElementById('cat-count-label').textContent = `[ ${categories.length} COLLECTIONS ]`;
+
+            grid.innerHTML = categories.map(cat => {
+                const count = products.filter(p => p.category.toLowerCase() === cat.name.toLowerCase()).length;
+                return `
+                    <a href="category.html?slug=${encodeURIComponent(cat.slug)}&name=${encodeURIComponent(cat.name)}" class="shop-card dn-reveal">
+                        <div class="shop-card-bg" style="background-image: url('${cat.image}');"></div>
+                        <div class="shop-card-glass"></div>
+                        <span class="shop-card-desc">${cat.desc || ''}</span>
+                        <span class="shop-card-count">${count} PIECES</span>
+                        <div class="shop-card-content">
+                            <span class="shop-card-title">${cat.name}</span>
+                            <span class="shop-card-arrow">↗</span>
+                        </div>
+                    </a>
+                `;
+            }).join('');
+        });
+    </script>
 </body>
 
 </html>

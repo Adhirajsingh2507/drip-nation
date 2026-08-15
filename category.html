@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Collection | Drip Nation</title>
+    <meta name="description" content="Browse this collection at Drip Nation. Premium streetwear catalog.">
+    <link rel="stylesheet" href="assets/css/styles.css">
+    <script src="assets/js/cart.js" defer></script>
+    <script src="assets/js/store-bridge.js" defer></script>
+</head>
+
+<body>
+    <!-- Breadcrumbs -->
+    <nav class="dn-breadcrumbs">
+        <a href="index.html">Home</a>
+        <span class="separator">/</span>
+        <a href="shop.html">Shop</a>
+        <span class="separator">/</span>
+        <span class="current" id="breadcrumb-name">Collection</span>
+    </nav>
+
+    <!-- Category Hero Banner -->
+    <div class="dn-category-hero">
+        <div class="dn-category-hero-bg" id="hero-bg"></div>
+        <div class="dn-category-hero-overlay"></div>
+        <div class="dn-category-hero-content">
+            <h1 class="dn-category-hero-title" id="hero-title">COLLECTION</h1>
+            <p class="dn-category-hero-subtitle" id="hero-subtitle">LOADING...</p>
+        </div>
+    </div>
+
+    <!-- Filter Pills -->
+    <div class="dn-filter-bar">
+        <button class="dn-filter-pill active" data-sort="all">All</button>
+        <button class="dn-filter-pill" data-sort="low-stock">Low Stock</button>
+        <button class="dn-filter-pill" data-sort="price-asc">Price ↑</button>
+        <button class="dn-filter-pill" data-sort="price-desc">Price ↓</button>
+        <button class="dn-filter-pill" data-sort="sale">On Sale</button>
+    </div>
+
+    <!-- Product Grid -->
+    <div class="dn-product-grid" id="productGrid"></div>
+
+    <!-- Empty State -->
+    <div id="emptyState" style="display:none; text-align:center; padding: 80px 20px;">
+        <p style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 1.6rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: rgba(255,255,255,0.2); margin-bottom: 16px;">NO PRODUCTS YET</p>
+        <p style="font-size: 0.8rem; color: rgba(255,255,255,0.4); letter-spacing: 0.1em;">Add products to this category from the <a href="admin.html" style="color: #fff; text-decoration: underline;">Admin Panel</a>.</p>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // ── Read URL params ──
+            const params = new URLSearchParams(window.location.search);
+            const slug = params.get('slug');
+            const categoryName = params.get('name') || 'Collection';
+
+            // ── Set page metadata ──
+            document.title = categoryName + ' | Drip Nation';
+            document.getElementById('breadcrumb-name').textContent = categoryName;
+            document.getElementById('hero-title').textContent = categoryName.toUpperCase();
+
+            // ── Find category data ──
+            const category = StoreBridge.getCategories().find(c =>
+                c.slug === slug || c.name.toLowerCase() === categoryName.toLowerCase()
+            );
+
+            if (category) {
+                document.getElementById('hero-bg').style.backgroundImage = `url('${category.image}')`;
+            }
+
+            // ── Load products ──
+            let allProducts = StoreBridge.getProductsByCategory(categoryName);
+
+            document.getElementById('hero-subtitle').textContent =
+                (category?.desc || 'PREMIUM COLLECTION').toUpperCase() + ' · ' + allProducts.length + ' PIECES';
+
+            function renderGrid(products) {
+                const grid = document.getElementById('productGrid');
+                const empty = document.getElementById('emptyState');
+
+                if (products.length === 0) {
+                    grid.innerHTML = '';
+                    empty.style.display = 'block';
+                    return;
+                }
+
+                empty.style.display = 'none';
+                grid.innerHTML = products.map(p => StoreBridge.renderProductCard(p)).join('');
+            }
+
+            renderGrid(allProducts);
+
+            // ── Filter Pills ──
+            document.querySelectorAll('.dn-filter-pill').forEach(pill => {
+                pill.addEventListener('click', function () {
+                    document.querySelectorAll('.dn-filter-pill').forEach(p => p.classList.remove('active'));
+                    this.classList.add('active');
+
+                    const sort = this.dataset.sort;
+                    let sorted = [...allProducts];
+
+                    switch (sort) {
+                        case 'price-asc':
+                            sorted.sort((a, b) => (a.sale || a.price) - (b.sale || b.price));
+                            break;
+                        case 'price-desc':
+                            sorted.sort((a, b) => (b.sale || b.price) - (a.sale || a.price));
+                            break;
+                        case 'low-stock':
+                            sorted = sorted.filter(p => p.stock < 15);
+                            break;
+                        case 'sale':
+                            sorted = sorted.filter(p => p.sale);
+                            break;
+                    }
+
+                    renderGrid(sorted);
+                });
+            });
+        });
+    </script>
+</body>
+
+</html>
