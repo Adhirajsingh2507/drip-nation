@@ -1,0 +1,1 @@
+@supabase/supabase-js@2.112.3 — vendored UMD (dist/umd/supabase.min.js) from jsdelivr. Self-hosted to avoid a runtime CDN dependency on the storefront. To update: re-download the pinned version and bump this note.
