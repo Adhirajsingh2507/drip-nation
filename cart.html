@@ -116,6 +116,18 @@
             .cart-item-img { width: 60px; height: 80px; grid-row: span 2; }
             .order-summary { position: static; padding: 30px; }
         }
+
+        /* Checkout modal */
+        .co-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); display: none; align-items: flex-start; justify-content: center; z-index: 600; padding: 6vh 20px; overflow-y: auto; }
+        .co-modal-overlay.open { display: flex; }
+        .co-modal { width: 100%; max-width: 440px; background: #0a0a0a; border: 1px solid var(--glass-border); border-radius: 12px; }
+        .co-modal-head { display: flex; justify-content: space-between; align-items: center; padding: 20px 24px; border-bottom: 1px solid rgba(255,255,255,0.1); font-size: 0.75rem; letter-spacing: 0.2em; text-transform: uppercase; }
+        .co-close { background: none; border: none; color: #fff; font-size: 1.5rem; cursor: pointer; line-height: 1; }
+        .co-form { padding: 24px; display: flex; flex-direction: column; gap: 12px; }
+        .co-form input { background: rgba(0,0,0,0.4); border: 1px solid var(--glass-border); color: #fff; padding: 12px 14px; border-radius: 4px; font-size: 0.85rem; }
+        .co-form input:focus { outline: none; border-color: rgba(255,255,255,0.3); }
+        .co-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+        @media (max-width: 480px) { .co-row { grid-template-columns: 1fr; } }
     </style>
 </head>
 
@@ -170,9 +182,32 @@
                 </div>
             </div>
 
-            <button class="checkout-btn" onclick="CartEngine.showComingSoonModal()">CHECKOUT</button>
+            <button class="checkout-btn" onclick="startCheckout()">CHECKOUT</button>
             <a href="shop.html" class="continue-btn">CONTINUE SHOPPING</a>
         </aside>
+    </div>
+
+    <!-- ═══ CHECKOUT MODAL (Phase 5.3) ═══ -->
+    <div id="checkout-modal" class="co-modal-overlay">
+        <div class="co-modal">
+            <div class="co-modal-head">
+                <span>Checkout</span>
+                <button class="co-close" onclick="closeCheckout()">&times;</button>
+            </div>
+            <form class="co-form" onsubmit="submitCheckout(event)">
+                <input id="co-name" placeholder="Full name" required autocomplete="name">
+                <input id="co-email" type="email" placeholder="Email" required autocomplete="email">
+                <input id="co-phone" type="tel" placeholder="Phone" required autocomplete="tel">
+                <input id="co-line1" placeholder="Address" required autocomplete="address-line1">
+                <div class="co-row">
+                    <input id="co-city" placeholder="City" required autocomplete="address-level2">
+                    <input id="co-state" placeholder="State" required autocomplete="address-level1">
+                    <input id="co-pincode" placeholder="Pincode" required inputmode="numeric" autocomplete="postal-code">
+                </div>
+                <div id="checkout-msg" class="promo-msg"></div>
+                <button type="submit" id="checkout-submit" class="checkout-btn" style="margin-top:6px;">PAY SECURELY</button>
+            </form>
+        </div>
     </div>
 
     <script>
@@ -296,6 +331,97 @@
 
         function changeQty(key, delta) { CartEngine.updateQuantity(key, delta); renderCart(); }
         function removeItem(key) { CartEngine.removeItem(key); renderCart(); }
+
+        // ── Checkout (Phase 5.3) ──
+        const val = id => document.getElementById(id).value.trim();
+
+        function startCheckout() {
+            if (CartEngine.getItems().length === 0) return;
+            // Kill-switch: until the checkout function is deployed + keys set, keep the teaser
+            if (!window.DN_CONFIG || !window.DN_CONFIG.checkoutEnabled) { CartEngine.showComingSoonModal(); return; }
+            document.getElementById('checkout-msg').textContent = '';
+            document.getElementById('checkout-modal').classList.add('open');
+        }
+        function closeCheckout() { document.getElementById('checkout-modal').classList.remove('open'); }
+
+        async function submitCheckout(e) {
+            e.preventDefault();
+            const btn = document.getElementById('checkout-submit');
+            const msg = document.getElementById('checkout-msg');
+            btn.disabled = true; msg.className = 'promo-msg'; msg.textContent = 'Creating your order…';
+
+            const items = CartEngine.getItems().map(i => ({ product_id: i.product_id, size: i.size || '', quantity: i.quantity }));
+            const customer = {
+                name: val('co-name'), email: val('co-email'), phone: val('co-phone'),
+                address: { line1: val('co-line1'), city: val('co-city'), state: val('co-state'), pincode: val('co-pincode') }
+            };
+            const payload = { items, promo_code: appliedPromo ? appliedPromo.code : null, customer };
+
+            let res, data;
+            try {
+                res = await fetch(window.DN_CONFIG.supabaseUrl + '/functions/v1/checkout', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'apikey': window.DN_CONFIG.supabaseAnonKey,
+                        'Authorization': 'Bearer ' + window.DN_CONFIG.supabaseAnonKey
+                    },
+                    body: JSON.stringify(payload)
+                });
+                data = await res.json().catch(() => ({}));
+            } catch (err) {
+                msg.className = 'promo-msg error'; msg.textContent = 'Network error. Please try again.'; btn.disabled = false; return;
+            }
+            if (!res.ok) {
+                msg.className = 'promo-msg error'; msg.textContent = (data && data.error) || 'Checkout failed. Please try again.'; btn.disabled = false; return;
+            }
+            msg.textContent = 'Opening secure payment…';
+            await openRazorpay(data, customer);
+            btn.disabled = false;
+        }
+
+        function loadRazorpay() {
+            if (window.Razorpay) return Promise.resolve(true);
+            return new Promise(resolve => {
+                const s = document.createElement('script');
+                s.src = 'https://checkout.razorpay.com/v1/checkout.js';
+                s.onload = () => resolve(true); s.onerror = () => resolve(false);
+                document.head.appendChild(s);
+            });
+        }
+
+        async function openRazorpay(data, customer) {
+            const msg = document.getElementById('checkout-msg');
+            if (!(await loadRazorpay()) || !window.Razorpay) { msg.className = 'promo-msg error'; msg.textContent = 'Could not load payment.'; return; }
+            const rzp = new window.Razorpay({
+                key: data.key_id,
+                order_id: data.razorpay_order_id,
+                amount: data.amount,
+                currency: 'INR',
+                name: 'DRIP NATION',
+                description: 'Order ' + String(data.order_id).slice(0, 8),
+                prefill: { name: customer.name, email: customer.email, contact: customer.phone },
+                theme: { color: '#000000' },
+                // The webhook is authoritative for fulfillment; this only updates the UI.
+                handler: () => orderPlaced(data.order_id),
+                modal: { ondismiss: () => { msg.className = 'promo-msg error'; msg.textContent = 'Payment cancelled.'; } }
+            });
+            rzp.open();
+        }
+
+        function orderPlaced(orderId) {
+            localStorage.removeItem(CartEngine.key);
+            closeCheckout();
+            CartEngine.updateAllBadges();
+            document.getElementById('cart-item-count').innerText = '0';
+            document.getElementById('cart-container').innerHTML = `
+                <div class="empty-cart">
+                    <p class="empty-cart-msg" style="color:#34d399;">ORDER PLACED</p>
+                    <p style="color:var(--text-muted);letter-spacing:0.05em;margin-bottom:24px;">Order ${String(orderId).slice(0, 8)} — a confirmation email is on its way.</p>
+                    <a href="shop.html" class="continue-shopping-link">CONTINUE SHOPPING</a>
+                </div>`;
+            updateSummary(0);
+        }
 
         document.addEventListener("DOMContentLoaded", renderCart);
     </script>

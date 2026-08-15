@@ -10,7 +10,10 @@ window.DN_CONFIG = {
   supabaseAnonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVrcWNwdHJic21kcmVlbGdkb3ZsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY3OTQwODIsImV4cCI6MjEwMjM3MDA4Mn0.1I6P9HDwfbeoLa41DO4WwwWYoyYuj5T48tfFg5zJzfw',
   // Kill-switch: flip to false to fall back to the localStorage prototype path
   // (StoreBridge.ensureDefaults) if a Supabase deploy misbehaves.
-  useSupabase: true
+  useSupabase: true,
+  // Flip to true once the `checkout` Edge Function is deployed and Razorpay keys
+  // are set. Until then the cart shows the "Coming Soon" modal.
+  checkoutEnabled: false
 };
 
 window.dnSupabase = (window.supabase && window.DN_CONFIG.useSupabase)
