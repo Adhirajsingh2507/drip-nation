@@ -341,10 +341,19 @@
     <div id="auth-gate" style="position:fixed;inset:0;z-index:1000;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;text-align:center;padding:24px;">
         <h1 style="font-size:1.2rem;font-weight:700;letter-spacing:0.15em;">DRIP NATION · ADMIN</h1>
         <div id="auth-gate-msg" style="color:#666;font-size:0.85rem;max-width:380px;line-height:1.6;">Checking access…</div>
+        <!-- Sign in -->
         <form id="auth-login-form" style="display:none;flex-direction:column;gap:12px;width:280px;text-align:left;" onsubmit="signInEmail(event)">
             <input id="auth-email" type="email" placeholder="Email" required autocomplete="username" style="background:transparent;border:1px solid #222;color:#fff;padding:12px;font-size:0.85rem;">
             <input id="auth-password" type="password" placeholder="Password" required autocomplete="current-password" style="background:transparent;border:1px solid #222;color:#fff;padding:12px;font-size:0.85rem;">
             <button type="submit" class="btn btn-primary">Sign in</button>
+            <p style="font-size:0.72rem;color:#666;margin:4px 0 0;text-align:center;">No account? <a onclick="showAuthMode('signup')" style="color:#fff;text-decoration:underline;cursor:pointer;">Create one</a></p>
+        </form>
+        <!-- Sign up (creates an account; admin access still granted separately) -->
+        <form id="auth-signup-form" style="display:none;flex-direction:column;gap:12px;width:280px;text-align:left;" onsubmit="signUpEmail(event)">
+            <input id="auth-signup-email" type="email" placeholder="Email" required autocomplete="username" style="background:transparent;border:1px solid #222;color:#fff;padding:12px;font-size:0.85rem;">
+            <input id="auth-signup-password" type="password" placeholder="Password (min 6 chars)" required minlength="6" autocomplete="new-password" style="background:transparent;border:1px solid #222;color:#fff;padding:12px;font-size:0.85rem;">
+            <button type="submit" class="btn btn-primary">Create account</button>
+            <p style="font-size:0.72rem;color:#666;margin:4px 0 0;text-align:center;">Have an account? <a onclick="showAuthMode('login')" style="color:#fff;text-decoration:underline;cursor:pointer;">Sign in</a></p>
         </form>
         <button id="auth-signout-btn" class="btn btn-ghost" style="display:none;" onclick="signOut()">Sign out</button>
     </div>
@@ -730,11 +739,12 @@
             const gate = document.getElementById('auth-gate');
             const msg = document.getElementById('auth-gate-msg');
             const loginForm = document.getElementById('auth-login-form');
+            const signupForm = document.getElementById('auth-signup-form');
             const signoutBtn = document.getElementById('auth-signout-btn');
-            loginForm.style.display = 'none'; signoutBtn.style.display = 'none';
+            loginForm.style.display = 'none'; signupForm.style.display = 'none'; signoutBtn.style.display = 'none';
             if (!sb) { msg.textContent = 'Could not load Supabase. Refresh the page.'; return; }
             const { data: { session } } = await sb.auth.getSession();
-            if (!session) { msg.textContent = 'Sign in to access the admin panel.'; loginForm.style.display = 'flex'; return; }
+            if (!session) { showAuthMode('login'); return; }
             const { data: adminRow, error } = await sb.from('admins').select('id').eq('id', session.user.id).maybeSingle();
             if (error) { msg.textContent = 'Access check failed: ' + error.message; signoutBtn.style.display = 'inline-flex'; return; }
             if (!adminRow) {
@@ -754,6 +764,35 @@
             if (error) { msg.textContent = error.message; return; }
             // onAuthStateChange → initAuth re-runs, revealing the panel (or "not admin")
         }
+
+        function showAuthMode(mode) {
+            const login = document.getElementById('auth-login-form');
+            const signup = document.getElementById('auth-signup-form');
+            document.getElementById('auth-signout-btn').style.display = 'none';
+            login.style.display = mode === 'login' ? 'flex' : 'none';
+            signup.style.display = mode === 'signup' ? 'flex' : 'none';
+            document.getElementById('auth-gate-msg').textContent =
+                mode === 'signup' ? 'Create an account. Admin access is granted separately.' : 'Sign in to access the admin panel.';
+        }
+
+        async function signUpEmail(e) {
+            e.preventDefault();
+            const email = document.getElementById('auth-signup-email').value.trim();
+            const password = document.getElementById('auth-signup-password').value;
+            const msg = document.getElementById('auth-gate-msg');
+            msg.textContent = 'Creating account…';
+            const { data, error } = await sb.auth.signUp({ email, password });
+            if (error) { msg.textContent = error.message; return; }
+            if (data.session) {
+                // Auto-confirmed → signed in. initAuth (via onAuthStateChange) shows the
+                // "not an admin" state until this account is added to the admins table.
+                msg.textContent = 'Account created.';
+            } else {
+                document.getElementById('auth-signup-form').style.display = 'none';
+                msg.innerHTML = 'Account created — check <b>' + esc(email) + '</b> to confirm your email, then sign in.';
+            }
+        }
+
         async function signOut() { await sb.auth.signOut(); location.reload(); }
 
         function productsTableHTML(list) {
