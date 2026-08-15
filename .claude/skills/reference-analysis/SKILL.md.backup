@@ -1,0 +1,130 @@
+# Awwwards Reference Analysis
+Link=https://www.awwwards.com/websites/ui-design/
+You are analyzing high-quality web design references.
+
+The reference is inspiration and evidence, NOT a template to copy.
+
+## Analyze
+
+### 1. Layout
+- page structure
+- container widths
+- grid
+- columns
+- alignment
+- whitespace
+- section rhythm
+- hero composition
+- asymmetry
+
+### 2. Typography
+- font categories
+- display typography
+- body typography
+- hierarchy
+- font sizes
+- line heights
+- letter spacing
+- text widths
+
+### 3. Color
+- background colors
+- text colors
+- accents
+- borders
+- contrast
+- visual hierarchy
+
+### 4. Imagery
+- image ratios
+- cropping
+- image positioning
+- full bleed vs contained
+- image/text relationships
+
+### 5. Components
+- navigation
+- buttons
+- cards
+- forms
+- product components
+- sections
+- footers
+
+### 6. Interaction
+- hover behavior
+- focus states
+- menus
+- transitions
+- cursor behavior
+- scroll behavior
+
+### 7. Motion
+Identify:
+- entrance animations
+- image reveals
+- text reveals
+- stagger
+- scale
+- opacity
+- transforms
+- page transitions
+- duration
+- easing
+
+Do not recommend motion merely because it looks impressive.
+
+### 8. Responsive behavior
+
+Analyze:
+- desktop
+- laptop
+- tablet
+- mobile
+
+Identify what changes between breakpoints.
+
+### 9. UX
+
+Evaluate:
+- information hierarchy
+- navigation clarity
+- CTA hierarchy
+- readability
+- discoverability
+- interaction cost
+- accessibility
+
+### 10. Performance
+
+Identify potentially expensive:
+- video
+- WebGL
+- large images
+- fonts
+- JavaScript
+- animation
+
+## Output
+
+Create:
+
+.design/references/<name>/analysis.md
+
+and:
+
+.design/references/<name>/design-dna.md
+
+The Design DNA should summarize the underlying visual principles rather than reproducing exact implementation details.
+
+## Important
+
+Never blindly clone:
+- logos
+- brand identity
+- proprietary artwork
+- copy
+- distinctive illustrations
+- unique assets
+
+Extract principles and create an original implementation.

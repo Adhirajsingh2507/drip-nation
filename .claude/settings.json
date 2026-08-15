@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git status)",
+      "Bash(git diff *)",
+      "Bash(git log *)",
+      "Bash(git branch --show-current)",
+      "Bash(git ls-files *)",
+      "Bash(git check-ignore *)",
+      "Bash(find *)",
+      "Bash(grep *)",
+      "Bash(rg *)",
+      "Bash(ls *)",
+      "Bash(pwd)",
+      "Bash(cat *)",
+      "Bash(mkdir *)",
+      "Bash(chmod *)",
+      "Bash(npm *)",
+      "Bash(npx *)",
+      "Bash(python3 *)"
+    ]
+  }
+}
