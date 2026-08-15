@@ -349,10 +349,13 @@
             <p style="font-size:0.72rem;color:#666;margin:4px 0 0;text-align:center;">No account? <a onclick="showAuthMode('signup')" style="color:#fff;text-decoration:underline;cursor:pointer;">Create one</a></p>
         </form>
         <!-- Sign up (creates an account; admin access still granted separately) -->
-        <form id="auth-signup-form" style="display:none;flex-direction:column;gap:12px;width:280px;text-align:left;" onsubmit="signUpEmail(event)">
+        <form id="auth-signup-form" style="display:none;flex-direction:column;gap:10px;width:300px;text-align:left;" onsubmit="signUpEmail(event)">
+            <input id="auth-signup-name" type="text" placeholder="Full name" required autocomplete="name" style="background:transparent;border:1px solid #222;color:#fff;padding:12px;font-size:0.85rem;">
             <input id="auth-signup-email" type="email" placeholder="Email" required autocomplete="username" style="background:transparent;border:1px solid #222;color:#fff;padding:12px;font-size:0.85rem;">
-            <input id="auth-signup-password" type="password" placeholder="Password (min 6 chars)" required minlength="6" autocomplete="new-password" style="background:transparent;border:1px solid #222;color:#fff;padding:12px;font-size:0.85rem;">
-            <button type="submit" class="btn btn-primary">Create account</button>
+            <input id="auth-signup-phone" type="tel" placeholder="Phone (optional)" autocomplete="tel" style="background:transparent;border:1px solid #222;color:#fff;padding:12px;font-size:0.85rem;">
+            <input id="auth-signup-password" type="password" placeholder="Password (min 8 chars)" required minlength="8" autocomplete="new-password" style="background:transparent;border:1px solid #222;color:#fff;padding:12px;font-size:0.85rem;">
+            <input id="auth-signup-confirm" type="password" placeholder="Confirm password" required minlength="8" autocomplete="new-password" style="background:transparent;border:1px solid #222;color:#fff;padding:12px;font-size:0.85rem;">
+            <button type="submit" class="btn btn-primary" style="margin-top:4px;">Create account</button>
             <p style="font-size:0.72rem;color:#666;margin:4px 0 0;text-align:center;">Have an account? <a onclick="showAuthMode('login')" style="color:#fff;text-decoration:underline;cursor:pointer;">Sign in</a></p>
         </form>
         <button id="auth-signout-btn" class="btn btn-ghost" style="display:none;" onclick="signOut()">Sign out</button>
@@ -777,11 +780,18 @@
 
         async function signUpEmail(e) {
             e.preventDefault();
+            const full_name = document.getElementById('auth-signup-name').value.trim();
             const email = document.getElementById('auth-signup-email').value.trim();
+            const phone = document.getElementById('auth-signup-phone').value.trim();
             const password = document.getElementById('auth-signup-password').value;
+            const confirm = document.getElementById('auth-signup-confirm').value;
             const msg = document.getElementById('auth-gate-msg');
+            if (password !== confirm) { msg.textContent = 'Passwords do not match.'; return; }
             msg.textContent = 'Creating account…';
-            const { data, error } = await sb.auth.signUp({ email, password });
+            const { data, error } = await sb.auth.signUp({
+                email, password,
+                options: { data: { full_name, phone } }   // stored on the user's profile (user_metadata)
+            });
             if (error) { msg.textContent = error.message; return; }
             if (data.session) {
                 // Auto-confirmed → signed in. initAuth (via onAuthStateChange) shows the
