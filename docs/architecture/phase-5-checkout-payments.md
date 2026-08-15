@@ -48,14 +48,14 @@ flowchart LR
 
 ## 2. Sub-phases (each reviewable; ship in order)
 
-### 5.0 — Cart carries `product_id` + `size` (frontend prerequisite)
-- Change `CartEngine.addItem(productId, name, price, image, size)`; cart item becomes
-  `{ product_id, name, price, image, size, quantity }`, keyed by `product_id + '|' + size`.
-- Update callers: `store-bridge.renderProductCard` (pass `product.id`, no size → default/null),
-  and `product.html` ADD TO BAG (pass `product.id` + the selected size pill).
-- `cart.html` line rows: show size; quantity keyed by id+size.
-- **No server yet** — this is a pure client refactor, shippable alone.
-- **Gate:** adding two sizes of the same product yields two cart lines, each carrying `product_id`.
+### 5.0 — Cart carries `product_id` + `size` (frontend prerequisite) ✅ DONE
+- `CartEngine.addItem(productId, name, price, image, size)`; cart item is now
+  `{ product_id, name, price, image, size, quantity }`, keyed by `lineKey()` = `product_id|size`.
+- Callers updated: `store-bridge.renderProductCard` (passes `product.id`, empty size),
+  `product.html` ADD TO BAG (passes `product.id` + the selected size pill).
+- `cart.html` shows the real size and keys qty/remove on the line key.
+- **Gate (verified in-browser):** two sizes of one product → two lines, each carrying
+  `product_id`; qty/remove act on the correct line. Pure client refactor, no server.
 
 ### 5.1 — Migration `0006` (schema + atomic functions)
 ```sql
