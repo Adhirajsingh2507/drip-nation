@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Drip Nation | Clear Water Spotlight</title>
+  <link rel="stylesheet" href="assets/css/styles.css">
+  <script src="assets/js/script.js" defer></script>
+  <script src="assets/js/cart.js" defer></script>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Inter:wght@200;300;400&family=Outfit:wght@300;500;700&display=swap"
+    rel="stylesheet">
+</head>
+
+<body>
+
+  <div class="hero-container" id="hero">
+    <!-- Base Layer -->
+    <div class="layer layer-base">
+      <div class="full-img img2 base-left"></div>
+      <div class="full-img img1 base-right"></div>
+    </div>
+
+    <!-- Spotlight Reveal Layer (Masked by SVG) -->
+    <div class="layer layer-spotlight" id="spotlight-layer">
+      <div class="full-img img1 spot-left depth-effect"></div>
+      <div class="full-img img2 spot-right depth-effect"></div>
+    </div>
+
+    <!-- Top Boundary Line -->
+    <div class="top-boundary-line"></div>
+
+    <!-- UI Copy -->
+    <div class="hero-content pointer-events-none">
+      <h1 class="hero-title">THE DRIP NATION</h1>
+      <p class="hero-subtitle">Tap & Hold the Border</p>
+    </div>
+
+    <!-- Transparent Bottom Line -->
+    <div class="bottom-boundary-line"></div>
+  </div>
+
+  <!-- SVG Mask Definition -->
+  <svg style="position: absolute; width: 0; height: 0; overflow: hidden; pointer-events: none;" aria-hidden="true">
+    <defs>
+      <filter id="waterEdge">
+        <!-- Larger blur for a softer, glowing glass transition -->
+        <feGaussianBlur stdDeviation="20" result="blur" />
+        <!-- Lower frequency makes the waves broad and sleek instead of jagged -->
+        <feTurbulence id="turb" type="fractalNoise" baseFrequency="0.008" numOctaves="2" result="noise" />
+        <feDisplacementMap id="disp" in="blur" in2="noise" scale="25" xChannelSelector="R" yChannelSelector="G" />
+      </filter>
+      <mask id="waterMask" maskUnits="userSpaceOnUse">
+        <!-- The pure white circle reveals what's underneath -->
+        <circle id="maskCircle" cx="-500" cy="-500" r="100" fill="white" filter="url(#waterEdge)" />
+      </mask>
+      <!-- Second mask dynamically updating for Page 2 space -->
+      <mask id="waterMask2" maskUnits="userSpaceOnUse">
+        <circle id="maskCircle2" cx="-500" cy="-500" r="100" fill="white" filter="url(#waterEdge)" />
+      </mask>
+    </defs>
+  </svg>
+
+  <!-- Second Page Section -->
+  <div class="second-page-container" id="page2">
+    <img src="assets/images/blue page.png" class="page2-layer-blue" alt="Blue Layer">
+    <img src="assets/images/orange page.png" class="page2-layer-orange" alt="Orange Layer">
+    <img src="assets/images/blue page.png" class="page2-layer-blue-static" alt="Blue Face Static">
+
+    <!-- Static Focus Frame Immune to Spotlight -->
+    <div class="focus-box">
+      <div class="grid-cell glass-cell"></div>
+      <div class="grid-cell"></div>
+      <div class="grid-cell glass-cell"></div>
+      <div class="grid-cell"></div>
+      <div class="grid-cell glass-cell"></div>
+      <div class="grid-cell"></div>
+      <div class="grid-cell glass-cell"></div>
+      <div class="grid-cell"></div>
+      <div class="grid-cell glass-cell"></div>
+    </div>
+
+    <!-- Interactive Explore Button -->
+    <a href="shop.html" class="explore-btn">explore</a>
+  </div>
+
+  <script src="assets/js/script.js"></script>
+</body>
+
+</html>

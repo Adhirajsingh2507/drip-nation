@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Retro Jersey | Drip Nation</title>
+    <!-- Importing Inter for thin clean grid aesthetic -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;600&display=swap" rel="stylesheet">
+    <script src="assets/js/cart.js"></script>
+    <style>
+        /* Base Reset */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: #000000;
+            color: #ffffff;
+            font-family: 'Neue Haas Grotesk Display Pro', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            padding: 40px;
+        }
+
+        .header-container {
+            margin-bottom: 60px;
+        }
+
+        h1.page-heading {
+            font-size: clamp(3rem, 10vw, 6rem);
+            font-weight: 400;
+            margin: 0 0 10px 0;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            width: 100%;
+        }
+
+        .header-cart-btn {
+            font-family: 'Inter', sans-serif;
+            font-size: 0.85rem;
+            color: #ffffff;
+            text-decoration: none;
+            letter-spacing: 0.1em;
+            display: inline-block;
+            margin-bottom: 30px;
+            /* Sits nicely below header */
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 8px 16px;
+            border-radius: 50px;
+            transition: background 0.3s ease, color 0.3s ease;
+        }
+
+        .header-cart-btn:hover {
+            background: #fff;
+            color: #000;
+        }
+
+        .back-nav {
+            font-family: 'Inter', sans-serif;
+            text-decoration: none;
+            color: #ffffff;
+            font-size: 0.85rem;
+            letter-spacing: 0.05em;
+            font-weight: 400;
+            display: inline-flex;
+            align-items: center;
+            opacity: 0.6;
+            transition: opacity 0.3s ease;
+            margin-bottom: 20px;
+        }
+
+        .back-nav:hover {
+            opacity: 1;
+        }
+
+        .ecommerce-grid {
+            width: 100%;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 40px;
+            padding-bottom: 60px;
+        }
+
+        .product-box {
+            background-color: rgba(20, 20, 20, 0.5);
+            /* Glassmorphism start */
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 16px;
+            /* Smoothed edges for glass effect */
+            aspect-ratio: 1 / 2.2;
+            /* Extremely tall rectangular desktop format */
+            position: relative;
+            cursor: pointer;
+            transition: transform 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8), inset 0 0 10px rgba(255, 255, 255, 0.05);
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+        }
+
+        .product-box:hover {
+            transform: translateY(-8px);
+            border-color: rgba(255, 255, 255, 0.4);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.9), inset 0 0 15px rgba(255, 255, 255, 0.1);
+        }
+
+        .product-image {
+            width: 100%;
+            height: 82%;
+            background-color: #0a0a0a;
+            background-size: cover;
+            background-position: center;
+            border-radius: 10px;
+            /* Matching the inner card roundness subtly */
+        }
+
+        .card-actions {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .price-tag {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            /* Moved cleanly to left corner */
+            background-color: transparent;
+            /* Changed to glassy price text */
+            color: #ffffff;
+            font-family: 'Inter', sans-serif;
+            font-weight: 400;
+            font-size: 1rem;
+            padding: 6px 12px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 50px;
+            letter-spacing: 0.1em;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+
+        .cart-icon-btn {
+            background-color: transparent;
+            color: #ffffff;
+            font-family: 'Inter', sans-serif;
+            font-size: 1.2rem;
+            padding: 4px 14px;
+            border: 1px solid #ffffff;
+            border-radius: 50px;
+            cursor: pointer;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .cart-icon-btn:hover {
+            background-color: #ffffff;
+            color: #000000;
+            transform: scale(1.05);
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+
+            .header-container {
+                margin-bottom: 20px;
+            }
+
+            .ecommerce-grid {
+                gap: 8px;
+                /* Less space in between */
+            }
+
+            .product-box {
+                padding: 8px;
+                aspect-ratio: auto;
+                height: 65dvh;
+                /* Made significantly taller/elongated relative to original */
+            }
+
+            .price-tag {
+                font-size: 0.95rem;
+                /* Punchy mobile text */
+                padding: 5px 10px;
+                bottom: 12px;
+                left: 12px;
+                /* Ensure left placement hits mobile perfectly */
+            }
+
+            .card-actions {
+                bottom: 12px;
+                right: 12px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <h1 class="page-heading">Retro Jersey</h1>
+    <a href="cart.html" class="header-cart-btn">BAG: <span class="dn-cart-count">0</span></a>
+
+    <div class="ecommerce-grid" id="productGrid"></div>
+
+    <script>
+        const grid = document.getElementById('productGrid');
+        for (let i = 1; i <= 30; i++) {
+            const box = document.createElement('div');
+            box.className = 'product-box';
+            box.onclick = () => window.location.href = 'product.html';
+
+            const basePrice = Math.floor(Math.random() * (130 - 45 + 1)) + 45;
+            const imgNum = i % 2 === 0 ? '2' : '1';
+            const imageSrc = `i3 (${imgNum}).jpeg`;
+
+            box.innerHTML = `
+                <div class="product-image" style="background-image: url('${imageSrc}');"></div>
+                <div class="price-tag">₹ ${basePrice.toLocaleString('en-IN')}</div>
+                <div class="card-actions">
+                    <button class="cart-icon-btn" onclick="event.stopPropagation(); CartEngine.addItem('Retro Jersey', '${basePrice}', '${imageSrc}')">+</button>
+                </div>
+            `;
+            grid.appendChild(box);
+        }
+    </script>
+</body>
+
+</html>

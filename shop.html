@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Drip Nation | Categories</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400&display=swap" rel="stylesheet">
+    <script src="assets/js/cart.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: #000000;
+            /* Pure black background */
+            color: #ffffff;
+            font-family: 'Neue Haas Grotesk Display Pro', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding: 40px;
+        }
+
+        h1.page-heading {
+            font-weight: 400;
+            font-size: clamp(3rem, 6vw, 5rem);
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            margin-bottom: 30px;
+            text-align: left;
+            width: 100%;
+        }
+
+        .grid-container {
+            width: 100%;
+            max-width: 1000px;
+            display: flex;
+            flex-direction: column;
+            /* Stack vertically to make them strictly long rectangles */
+            gap: 25px;
+            /* Spaced out so they are individual boxes */
+            margin-bottom: 60px;
+        }
+
+        .grid-item {
+            position: relative;
+            width: 100%;
+            height: clamp(250px, 35vh, 400px);
+            /* Taller, longer rectangles */
+            background-color: transparent;
+            border-radius: 20px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            /* Center content */
+            justify-content: space-between;
+            cursor: pointer;
+            text-decoration: none;
+
+            /* Glassmorphism Outline/Box structure */
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8), inset 0 0 20px rgba(255, 255, 255, 0.05);
+            transition: transform 0.4s ease, border-color 0.4s ease;
+        }
+
+        .grid-item:hover {
+            transform: translateY(-5px);
+            border-color: rgba(255, 255, 255, 0.4);
+        }
+
+        /* The Image sits behind everything */
+        .item-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-size: cover;
+            background-position: center;
+            /* Cinematic grayscale transition */
+            filter: grayscale(100%) contrast(1.1) brightness(0.6);
+            transition: filter 0.8s cubic-bezier(0.19, 1, 0.22, 1);
+            z-index: 0;
+        }
+
+        .grid-item:hover .item-bg {
+            filter: grayscale(0%) contrast(1.05) brightness(0.85);
+            /* Slightly brighter */
+        }
+
+        /* Glassmorphic overlay pane over a part of the box or full box */
+        .glass-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(0, 0, 0, 0.6) 0%, rgba(0, 0, 0, 0.2) 100%);
+            backdrop-filter: blur(4px);
+            /* Very subtle blur so image is still visible, but feels like glass */
+            -webkit-backdrop-filter: blur(4px);
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        /* Text Content */
+        .content-wrapper {
+            position: relative;
+            z-index: 2;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: flex-end;
+            padding: 30px;
+        }
+
+        /* Specifically requested Typography */
+        .category-title {
+            font-family: 'Inter', sans-serif;
+            font-size: clamp(1.8rem, 4vw, 3rem);
+            font-weight: 300;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+        }
+
+        .dotted-arrow {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.4em;
+            margin-left: 15px;
+            border: 1px dotted rgba(255, 255, 255, 0.6);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            transition: transform 0.4s ease, border-color 0.4s ease;
+        }
+
+        .grid-item:hover .dotted-arrow {
+            transform: translate(6px, -6px);
+            border-color: #ffffff;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            body {
+                padding: 20px;
+            }
+
+            .grid-container {
+                gap: 15px;
+            }
+
+            .grid-item {
+                height: 35vh;
+                /* Decently large, extremely long visually */
+                border-radius: 12px;
+            }
+
+            .content-wrapper {
+                padding: 20px;
+                /* Crisp spacing */
+            }
+
+            .category-title {
+                font-size: 1.8rem;
+                /* Decently large as requested */
+            }
+
+            .dotted-arrow {
+                width: 32px;
+                height: 32px;
+                margin-left: 10px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <h1 class="page-heading">Categories</h1>
+
+    <div class="grid-container">
+        <!-- Stacked Glass Cards -->
+        <a href="retro-jersey.html" class="grid-item">
+            <div class="item-bg" style="background-image: url('assets/images/retro jerseys.jpeg');"></div>
+            <div class="glass-overlay"></div>
+            <div class="content-wrapper">
+                <span class="category-title">Retro Jersey <span class="dotted-arrow">&#8599;</span></span>
+            </div>
+        </a>
+
+        <a href="accessories.html" class="grid-item">
+            <div class="item-bg" style="background-image: url('assets/images/accessories.jpeg');"></div>
+            <div class="glass-overlay"></div>
+            <div class="content-wrapper">
+                <span class="category-title">Accessories <span class="dotted-arrow">&#8599;</span></span>
+            </div>
+        </a>
+
+        <a href="jackets.html" class="grid-item">
+            <div class="item-bg" style="background-image: url('assets/images/jackets.jpeg');"></div>
+            <div class="glass-overlay"></div>
+            <div class="content-wrapper">
+                <span class="category-title">Jacket <span class="dotted-arrow">&#8599;</span></span>
+            </div>
+        </a>
+
+        <a href="track-and-suit.html" class="grid-item">
+            <div class="item-bg" style="background-image: url('assets/images/track and suit.jpeg');"></div>
+            <div class="glass-overlay"></div>
+            <div class="content-wrapper">
+                <span class="category-title">Track and Suit <span class="dotted-arrow">&#8599;</span></span>
+            </div>
+        </a>
+
+        <!-- Newly added Back to Home Button -->
+        <a href="index.html" class="back-home-btn" style="
+            text-align: center;
+            display: inline-block;
+            margin: 40px auto 20px auto;
+            color: #ffffff;
+            font-family: 'Inter', sans-serif;
+            font-size: 1rem;
+            letter-spacing: 0.1em;
+            text-decoration: none;
+            border: 1px solid rgba(255,255,255,0.4);
+            padding: 15px 40px;
+            border-radius: 50px;
+            transition: all 0.3s ease;
+        " onmouseover="this.style.backgroundColor='#ffffff'; this.style.color='#000000'"
+            onmouseout="this.style.backgroundColor='transparent'; this.style.color='#ffffff'">
+            BACK TO HOME
+        </a>
+    </div>
+</body>
+
+</html>

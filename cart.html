@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Drip Nation | Premium Cart</title>
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@200;300;400;600&display=swap"
+        rel="stylesheet">
+    <script src="assets/js/cart.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: #000;
+            color: #fff;
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            padding: 100px 40px;
+        }
+
+        .back-nav {
+            font-family: 'Inter', sans-serif;
+            text-decoration: none;
+            color: #ffffff;
+            font-size: 0.85rem;
+            letter-spacing: 0.05em;
+            font-weight: 400;
+            transition: opacity 0.3s ease;
+            position: absolute;
+            top: 40px;
+            left: 40px;
+        }
+
+        .back-nav:hover {
+            opacity: 0.6;
+        }
+
+        .cart-header {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: clamp(4rem, 10vw, 8rem);
+            margin-bottom: 20px;
+            letter-spacing: 0.05em;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+            padding-bottom: 20px;
+            text-transform: uppercase;
+        }
+
+        .cart-items {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            margin-bottom: 60px;
+            min-height: 20vh;
+        }
+
+        .cart-item {
+            display: grid;
+            grid-template-columns: 80px 1fr auto auto;
+            align-items: center;
+            gap: 30px;
+            padding: 20px;
+            background: rgba(20, 20, 20, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            /* Sharp technical finish */
+        }
+
+        .cart-item-img {
+            width: 80px;
+            height: 120px;
+            background-size: cover;
+            background-position: center;
+            background-color: #111;
+            filter: grayscale(100%);
+        }
+
+        .cart-item-info {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .item-name {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 2rem;
+            letter-spacing: 0.05em;
+        }
+
+        .item-qty {
+            font-size: 0.85rem;
+            color: #888;
+            letter-spacing: 0.1em;
+        }
+
+        .item-price {
+            font-family: 'Inter', sans-serif;
+            font-size: 1.2rem;
+            font-weight: 300;
+        }
+
+        .remove-btn {
+            background: none;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: #fff;
+            padding: 10px 15px;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.7rem;
+            letter-spacing: 0.1em;
+            transition: all 0.3s ease;
+        }
+
+        .remove-btn:hover {
+            background: #fff;
+            color: #000;
+        }
+
+        .checkout-bar {
+            width: 100%;
+            border-top: 1px solid rgba(255, 255, 255, 0.5);
+            padding-top: 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+        }
+
+        .total-box {
+            display: flex;
+            flex-direction: column;
+            text-align: right;
+        }
+
+        .total-label {
+            font-size: 0.7rem;
+            letter-spacing: 0.2em;
+            color: rgba(255, 255, 255, 0.5);
+            margin-bottom: 10px;
+        }
+
+        .total-price {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: clamp(3rem, 6vw, 5rem);
+            letter-spacing: 0.05em;
+            line-height: 0.8;
+            text-shadow: 0 0 30px rgba(255, 255, 255, 0.2);
+        }
+
+        .checkout-btn {
+            padding: 20px 60px;
+            background: #fff;
+            color: #000;
+            border: none;
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 2rem;
+            letter-spacing: 0.1em;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+
+        .checkout-btn:hover {
+            transform: scale(1.05) translateY(-2px);
+            background: #eee;
+        }
+
+        .empty-cart-msg {
+            font-family: 'Inter', sans-serif;
+            font-size: 1.2rem;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 80px 20px 40px;
+            }
+
+            .back-nav {
+                top: 25px;
+                left: 20px;
+            }
+
+            .cart-item {
+                grid-template-columns: 60px 1fr;
+                grid-template-rows: auto auto;
+                gap: 15px;
+                padding: 15px;
+            }
+
+            .cart-item-img {
+                width: 60px;
+                height: 90px;
+                grid-row: span 2;
+            }
+
+            .item-price,
+            .remove-btn {
+                grid-column: 2;
+                margin-top: 10px;
+            }
+
+            .checkout-bar {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 30px;
+                text-align: center;
+            }
+
+            .total-box {
+                text-align: center;
+            }
+
+            .checkout-btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <a href="shop.html" class="back-nav">BACK TO SHOP</a>
+    <h1 class="cart-header">BAGGED GEAR</h1>
+
+    <div class="cart-items" id="cart-container">
+        <!-- Rendered via JS -->
+    </div>
+
+    <div class="checkout-bar">
+        <button class="checkout-btn" onclick="alert('Proceeding to Checkout.')">CHECKOUT</button>
+        <div class="total-box">
+            <span class="total-label">[ SYSTEM TOTAL ]</span>
+            <span class="total-price" id="cart-total">₹0</span>
+        </div>
+    </div>
+
+    <script>
+        function renderCart() {
+            const container = document.getElementById('cart-container');
+            const items = CartEngine.getItems();
+
+            if (items.length === 0) {
+                container.innerHTML = `<p class="empty-cart-msg">YOUR BAG IS EMPTY. LOAD UP.</p>`;
+                document.getElementById('cart-total').innerText = '₹0';
+                return;
+            }
+
+            container.innerHTML = items.map(item => `
+                <div class="cart-item">
+                    <div class="cart-item-img" style="background-image: url('${item.image || ''}')"></div>
+                    <div class="cart-item-info">
+                        <span class="item-name">${item.name}</span>
+                        <span class="item-qty">QTY: ${item.quantity}</span>
+                    </div>
+                    <span class="item-price">₹${item.price}</span>
+                    <button class="remove-btn" onclick="removeItem('${item.name}')">REMOVE</button>
+                </div>
+            `).join('');
+
+            document.getElementById('cart-total').innerText = `₹${CartEngine.getTotal().toLocaleString('en-IN')}`;
+        }
+
+        function removeItem(name) {
+            CartEngine.removeItem(name);
+            renderCart();
+        }
+
+        document.addEventListener("DOMContentLoaded", renderCart);
+    </script>
+</body>
+
+</html>
