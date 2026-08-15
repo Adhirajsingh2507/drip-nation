@@ -22,7 +22,8 @@ supabase secrets set \
   RAZORPAY_KEY_ID=rzp_live_xxx \
   RAZORPAY_KEY_SECRET=xxx \
   RAZORPAY_WEBHOOK_SECRET=xxx \
-  RESEND_API_KEY=re_xxx        # optional until 5.5
+  RESEND_API_KEY=re_xxx \
+  RESEND_FROM='Drip Nation <orders@your-verified-domain>'   # must be a Resend-verified sender
 # SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are injected automatically.
 
 supabase functions deploy checkout --no-verify-jwt

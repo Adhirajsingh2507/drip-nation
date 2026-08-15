@@ -14,6 +14,7 @@
 // the same secret, subscribed to payment.captured / order.paid / payment.failed.
 // ============================================================
 import { createClient } from 'jsr:@supabase/supabase-js@2';
+import { orderConfirmationEmail } from './email.ts';
 
 Deno.serve(async (req) => {
   if (req.method !== 'POST') return new Response('Method not allowed', { status: 405 });
@@ -76,10 +77,20 @@ function timingSafeEqual(a: string, b: string): boolean {
   return diff === 0;
 }
 
-// TODO(5.5): fetch order + items and send via Resend. Stubbed — no-op without a key.
-async function sendConfirmationEmail(_admin: any, _orderId: string): Promise<void> {
+// Order-confirmation email via Resend (no-op until RESEND_API_KEY is set).
+async function sendConfirmationEmail(admin: any, orderId: string): Promise<void> {
   const key = Deno.env.get('RESEND_API_KEY');
   if (!key) return;
-  // const { data: order } = await _admin.from('orders').select('*, order_items(*)').eq('id', _orderId).single();
-  // await fetch('https://api.resend.com/emails', { method:'POST', headers:{ Authorization:`Bearer ${key}`, ... }, body: ... });
+  const { data: order } = await admin.from('orders').select('*, order_items(*)').eq('id', orderId).single();
+  if (!order?.email) return;
+  const { subject, html, text } = orderConfirmationEmail(order);
+  const res = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      from: Deno.env.get('RESEND_FROM') || 'Drip Nation <orders@dripnation.store>',
+      to: order.email, subject, html, text,
+    }),
+  });
+  if (!res.ok) console.error('[webhook] resend failed', res.status, await res.text());
 }
