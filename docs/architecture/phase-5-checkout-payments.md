@@ -57,7 +57,10 @@ flowchart LR
 - **Gate (verified in-browser):** two sizes of one product → two lines, each carrying
   `product_id`; qty/remove act on the correct line. Pure client refactor, no server.
 
-### 5.1 — Migration `0006` (schema + atomic functions)
+### 5.1 — Migration `0006` (schema + atomic functions) ✅ DONE
+Applied and verified: pay+decrement, idempotent no-double-decrement, oversell→rollback
+(order stays Pending, stock intact), atomic promo redeem; `apply_paid_order`/`redeem_promo`
+EXECUTE-locked to `service_role` only (anon RPC → 404). Reference SQL below.
 ```sql
 -- Razorpay linkage + idempotency
 alter table orders
@@ -110,7 +113,8 @@ drop trigger if exists trg_decrement_stock on orders;   -- replaced by apply_pai
 - **Gate:** concurrent "mark paid" on the last unit → exactly one succeeds; the other's
   transaction raises and is caught.
 
-### 5.2 — `checkout` Edge Function (Deno, service role)
+### 5.2 — `checkout` Edge Function (Deno, service role) 🟡 STUBBED
+Code committed at `supabase/functions/checkout/` — deploy-ready, awaiting Razorpay keys.
 Input: `{ items:[{product_id, size, quantity}], promo_code?, customer:{name,email,phone,address} }`
 ```
 1. validate input shape (ids are ints, qty 1..N, required customer fields)
@@ -138,7 +142,8 @@ Input: `{ items:[{product_id, size, quantity}], promo_code?, customer:{name,emai
   never marks paid). Redirect to an order-confirmation view.
 - Keep the Coming Soon modal behind a flag as the kill-switch until this gate passes.
 
-### 5.4 — `razorpay-webhook` Edge Function (authoritative confirmation)
+### 5.4 — `razorpay-webhook` Edge Function (authoritative confirmation) 🟡 STUBBED
+Code committed at `supabase/functions/razorpay-webhook/` — deploy-ready, awaiting Razorpay webhook secret.
 ```
 1. read RAW body; verify header X-Razorpay-Signature == HMAC_SHA256(body, WEBHOOK_SECRET)  (else 401)
 2. parse event; INSERT payment_events(id=event.id) — on conflict → 200 (already processed)
