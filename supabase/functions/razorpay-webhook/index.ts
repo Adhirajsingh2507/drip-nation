@@ -56,6 +56,7 @@ Deno.serve(async (req) => {
         // insufficient stock at payment time → leave Pending, flag for manual review
         console.error('[webhook] apply_paid_order failed', order.id, paidErr.message);
       } else {
+        console.log('[webhook] order', order.id, 'marked Paid');
         await admin.rpc('redeem_promo', { p_code: order.promo_code });
         await admin.from('orders').update({ razorpay_payment_id: payment?.id }).eq('id', order.id);
         await sendConfirmationEmail(admin, order.id).catch((e) => console.error('[webhook] email', e));

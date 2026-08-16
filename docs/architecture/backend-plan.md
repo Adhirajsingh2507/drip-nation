@@ -129,15 +129,21 @@ The core commerce phase. Split into reviewable sub-steps. **Detailed design draf
   kill-switch until the gate passes in production.
 - **Risk:** high — **architect → implement → tests → security review → code review.**
 
-## Phase 6 — Production hardening ⬜
+## Phase 6 — Production hardening 🟡 IN PROGRESS
 
-- Move product media from the repo to **Supabase Storage** (public-read bucket);
-  update image URLs.
-- Server-side promo validation is the sole source of truth (client is UX only).
-- Run `get_advisors` (security + performance); fix RLS/index warnings.
-- Add rate limiting / abuse protection on the checkout function.
-- Observability: structured logs on both Edge Functions; alert on webhook failures.
-- **Gate:** advisors clean (excluding platform-owned lints); load/abuse test passes.
+- ⬜ **Move product media to Supabase Storage** — *deferred, low value here*: media is
+  already CDN-delivered by Vercel (static hosting), so the CDN goal is met; a real
+  migration also needs the service-role key. Revisit when admin image uploads land.
+- ✅ **Server-side promo validation** is the sole source of truth (Phase 5 `checkout` fn
+  + atomic `redeem_promo`).
+- ✅ **Advisors clean** (security + performance) — only expected INFOs (service-role-only
+  `payment_events`/`checkout_attempts`, unused indexes awaiting queries) + the
+  platform/trigger `security_definer` lints.
+- ✅ **Rate limiting / abuse protection** on checkout — migration `0007` (`rate_ok`,
+  per-IP 8 / 10 min; service-role only). Verified.
+- 🟡 **Observability** — structured logs added to both functions; **webhook-failure
+  alerting** still ⬜ (needs an external monitor once the functions are deployed).
+- ⬜ **Gate — load/abuse test:** needs the functions deployed (post Razorpay/Resend).
 - **Risk:** medium.
 
 ---

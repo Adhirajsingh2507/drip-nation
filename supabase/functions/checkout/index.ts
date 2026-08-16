@@ -47,6 +47,11 @@ Deno.serve(async (req) => {
     lines.push({ product_id: pid, size: String(it?.size ?? ''), quantity: qty });
   }
 
+  // abuse protection: per-IP rate limit (8 / 10 min)
+  const ip = (req.headers.get('x-forwarded-for') ?? '').split(',')[0].trim() || 'unknown';
+  const { data: allowed } = await admin.rpc('rate_ok', { p_ip: ip });
+  if (allowed === false) return json({ error: 'Too many attempts — please wait a minute and try again.' }, 429);
+
   // 2. fetch authoritative products
   const ids = [...new Set(lines.map((l) => l.product_id))];
   const { data: products, error: pErr } = await admin
@@ -104,6 +109,7 @@ Deno.serve(async (req) => {
   const { error: oiErr } = await admin.from('order_items')
     .insert(orderItems.map((oi) => ({ ...oi, order_id: order.id })));
   if (oiErr) return json({ error: 'Could not create order items' }, 500);
+  console.log('[checkout] order', order.id, 'created (Pending), total', total);
 
   // 9. Razorpay order (amount in paise)
   const rzpRes = await fetch('https://api.razorpay.com/v1/orders', {
