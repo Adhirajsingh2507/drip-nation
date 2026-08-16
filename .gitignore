@@ -4,3 +4,4 @@ node_modules/
 .env*
 .claude-backup/
 .playwright-mcp/
+supabase/.temp/
