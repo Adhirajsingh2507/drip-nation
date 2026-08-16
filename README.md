@@ -81,6 +81,7 @@ More: [`docs/architecture/system-architecture.md`](docs/architecture/system-arch
 | `0005_profiles` | `profiles` table auto-populated from signup metadata |
 | `0006_checkout` | Razorpay columns, `payment_events`, atomic `apply_paid_order`/`redeem_promo` |
 | `0007_rate_limit` | Per-IP checkout rate limiting (`rate_ok`, abuse protection) |
+| `0008_lock_trigger_fn` | Revoke direct execute on the signup trigger fn (surface reduction) |
 
 Money is stored as **integer whole rupees** everywhere. Migrations are applied to the
 Supabase project; the SQL files are the source of truth.

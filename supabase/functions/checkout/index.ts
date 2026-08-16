@@ -91,9 +91,11 @@ Deno.serve(async (req) => {
 
   // 6. shipping + tax (authoritative; mirrors cart.html)
   // ponytail: constants inline; lift to a settings table only if these change often
+  discount = Math.min(discount, subtotal);            // never discount below zero
+  const afterDiscount = subtotal - discount;
   const shipping = freeShip ? 0 : (subtotal >= 2000 ? 0 : 149);
-  const tax = Math.round((subtotal - discount) * 0.18);
-  const total = (subtotal - discount) + tax + shipping;
+  const tax = Math.round(afterDiscount * 0.18);
+  const total = afterDiscount + tax + shipping;
 
   // Fail before writing an order if payments aren't configured (no orphan Pending orders)
   const keyId = Deno.env.get('RAZORPAY_KEY_ID'), keySecret = Deno.env.get('RAZORPAY_KEY_SECRET');
