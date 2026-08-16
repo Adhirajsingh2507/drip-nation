@@ -140,6 +140,11 @@
                     </a>
                 `;
             }).join('');
+
+            // Reveal the async-rendered cards directly. They're added after the initial
+            // scroll-reveal observer ran (Supabase fetch), so relying on the observer is
+            // racy — just mark them visible so they never get stuck at opacity:0.
+            grid.querySelectorAll('.dn-reveal').forEach(el => el.classList.add('visible'));
         });
     </script>
 </body>
