@@ -34,8 +34,14 @@ Deno.serve(async (req) => {
 
   // 2. idempotency: dedupe on the Razorpay event id. Unique-violation → replay → 200.
   const eventId = req.headers.get('x-razorpay-event-id') ?? event.id ?? crypto.randomUUID();
-  const { error: dupe } = await admin.from('payment_events').insert({ id: eventId, type: event.event });
-  if (dupe) return new Response('ok (already processed)', { status: 200 });
+  const { error: insErr } = await admin.from('payment_events').insert({ id: eventId, type: event.event });
+  if (insErr) {
+    // 23505 = unique violation → this event was already processed (replay) → ack so Razorpay stops
+    if ((insErr as { code?: string }).code === '23505') return new Response('ok (already processed)', { status: 200 });
+    // any other DB error → 500 so Razorpay retries; never silently drop a payment event
+    console.error('[webhook] payment_events insert failed', insErr);
+    return new Response('error', { status: 500 });
+  }
 
   // 3. success events → mark paid + decrement stock + redeem promo (all atomic)
   if (event.event === 'payment.captured' || event.event === 'order.paid') {

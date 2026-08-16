@@ -69,7 +69,7 @@ Deno.serve(async (req) => {
   }
 
   // 5. promo — validate only; usage is incremented at payment (webhook)
-  let discount = 0, promoCode: string | null = null;
+  let discount = 0, promoCode: string | null = null, freeShip = false;
   if (promo_code) {
     const { data: promo } = await admin
       .from('promos').select('*').eq('code', promo_code).eq('status', 'Active').maybeSingle();
@@ -81,15 +81,18 @@ Deno.serve(async (req) => {
     else if (promo.type === 'fixed') discount = promo.value;
     // 'shipping' → free shipping handled below
     promoCode = promo.code;
-    if (promo.type === 'shipping') (customer as any)._freeShip = true;
+    if (promo.type === 'shipping') freeShip = true;
   }
 
   // 6. shipping + tax (authoritative; mirrors cart.html)
   // ponytail: constants inline; lift to a settings table only if these change often
-  const freeShip = (customer as any)?._freeShip === true;
   const shipping = freeShip ? 0 : (subtotal >= 2000 ? 0 : 149);
   const tax = Math.round((subtotal - discount) * 0.18);
   const total = (subtotal - discount) + tax + shipping;
+
+  // Fail before writing an order if payments aren't configured (no orphan Pending orders)
+  const keyId = Deno.env.get('RAZORPAY_KEY_ID'), keySecret = Deno.env.get('RAZORPAY_KEY_SECRET');
+  if (!keyId || !keySecret) return json({ error: 'Payments not configured' }, 503);
 
   // 7–8. create order (Pending) + item snapshots
   const { data: order, error: oErr } = await admin.from('orders').insert({
@@ -103,8 +106,6 @@ Deno.serve(async (req) => {
   if (oiErr) return json({ error: 'Could not create order items' }, 500);
 
   // 9. Razorpay order (amount in paise)
-  const keyId = Deno.env.get('RAZORPAY_KEY_ID'), keySecret = Deno.env.get('RAZORPAY_KEY_SECRET');
-  if (!keyId || !keySecret) return json({ error: 'Payments not configured' }, 503);
   const rzpRes = await fetch('https://api.razorpay.com/v1/orders', {
     method: 'POST',
     headers: { Authorization: 'Basic ' + btoa(`${keyId}:${keySecret}`), 'Content-Type': 'application/json' },
