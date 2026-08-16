@@ -113,8 +113,10 @@ drop trigger if exists trg_decrement_stock on orders;   -- replaced by apply_pai
 - **Gate:** concurrent "mark paid" on the last unit → exactly one succeeds; the other's
   transaction raises and is caught.
 
-### 5.2 — `checkout` Edge Function (Deno, service role) 🟡 STUBBED
-Code committed at `supabase/functions/checkout/` — deploy-ready, awaiting Razorpay keys.
+### 5.2 — `checkout` Edge Function (Deno, service role) ✅ DEPLOYED
+Live at `/functions/v1/checkout`. Runs the full pipeline (rate-limit + validation +
+totals) and stops at `503` until Razorpay keys are set — verified it creates **no
+order** without keys.
 Input: `{ items:[{product_id, size, quantity}], promo_code?, customer:{name,email,phone,address} }`
 ```
 1. validate input shape (ids are ints, qty 1..N, required customer fields)
@@ -145,8 +147,8 @@ function is deployed + keys set and the flag is flipped.
   never marks paid). Redirect to an order-confirmation view.
 - Keep the Coming Soon modal behind a flag as the kill-switch until this gate passes.
 
-### 5.4 — `razorpay-webhook` Edge Function (authoritative confirmation) 🟡 STUBBED
-Code committed at `supabase/functions/razorpay-webhook/` — deploy-ready, awaiting Razorpay webhook secret.
+### 5.4 — `razorpay-webhook` Edge Function (authoritative confirmation) ✅ DEPLOYED
+Live; rejects unsigned requests (`401`) until `RAZORPAY_WEBHOOK_SECRET` is set.
 ```
 1. read RAW body; verify header X-Razorpay-Signature == HMAC_SHA256(body, WEBHOOK_SECRET)  (else 401)
 2. parse event; INSERT payment_events(id=event.id) — on conflict → 200 (already processed)

@@ -1,8 +1,16 @@
 # Drip Nation — Edge Functions
 
-⚠️ **These are stubs — written and committed, but NOT deployed yet.** They go live
-in Phase 5 once the Razorpay/Resend accounts exist and secrets are set. Design:
-[`../../docs/architecture/phase-5-checkout-payments.md`](../../docs/architecture/phase-5-checkout-payments.md).
+✅ **Deployed** — all three functions are ACTIVE (`--no-verify-jwt`) and respond
+gracefully until the payment secrets are set: `checkout` → `503 Payments not
+configured`, `razorpay-webhook` → `401` (no signature), `order-status` → works
+(`ORDER_LOOKUP_SECRET` is set). Verified live incl. the rate-limit abuse test.
+
+**Secrets status:** `SUPABASE_URL`/`SUPABASE_SERVICE_ROLE_KEY` auto-injected ✓ ·
+`ORDER_LOOKUP_SECRET` set ✓ · **PENDING (yours):** `RAZORPAY_KEY_ID`,
+`RAZORPAY_KEY_SECRET`, `RAZORPAY_WEBHOOK_SECRET`, `RESEND_API_KEY`, `RESEND_FROM`,
+`SITE_URL`. Set them (below), then register the Razorpay webhook — no redeploy needed.
+
+Design: [`../../docs/architecture/phase-5-checkout-payments.md`](../../docs/architecture/phase-5-checkout-payments.md).
 
 | Function | Role | Deploy flag |
 |---|---|---|

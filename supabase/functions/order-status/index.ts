@@ -1,5 +1,5 @@
 // ============================================================
-// DRIP NATION — order-status Edge Function (Phase 5.5)  ⚠ NOT YET DEPLOYED
+// DRIP NATION — order-status Edge Function (Phase 5.5)  ✅ DEPLOYED (ORDER_LOOKUP_SECRET set)
 //
 // The guest order-lookup gate. Takes { order_id, token }, verifies the signed
 // token, and returns the order (+ items) via the service role. Orders stay

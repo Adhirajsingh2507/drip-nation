@@ -1,5 +1,5 @@
 // ============================================================
-// DRIP NATION — checkout Edge Function (Phase 5.2)  ⚠ NOT YET DEPLOYED
+// DRIP NATION — checkout Edge Function (Phase 5.2)  ✅ DEPLOYED (needs Razorpay secrets)
 //
 // Server-authoritative checkout: the browser sends INTENT only
 // ({ items:[{product_id,size,quantity}], promo_code?, customer{...} }).

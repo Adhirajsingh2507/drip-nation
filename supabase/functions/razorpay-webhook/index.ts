@@ -1,5 +1,5 @@
 // ============================================================
-// DRIP NATION — Razorpay webhook (Phase 5.4)  ⚠ NOT YET DEPLOYED
+// DRIP NATION — Razorpay webhook (Phase 5.4)  ✅ DEPLOYED (needs Razorpay/Resend secrets)
 //
 // The ONLY authoritative source of "paid". Verifies the HMAC signature,
 // dedupes on the event id (idempotent/replay-safe), then atomically marks the

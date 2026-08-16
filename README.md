@@ -17,7 +17,7 @@ from `main`).
 | Database schema + RLS (migrations `0001`–`0006`) | ✅ Applied |
 | Admin panel (email/password auth + `admins` table + CRUD) | ✅ Built — needs first admin created |
 | Checkout UI + cart with `product_id`/`size` | ✅ Built (gated by a flag) |
-| Payments (`checkout` / `razorpay-webhook` / `order-status` functions) | 🟡 Written, **not deployed** (needs Razorpay/Resend accounts) |
+| Payments (`checkout` / `razorpay-webhook` / `order-status` functions) | ✅ **Deployed & live** — respond gracefully; need Razorpay/Resend **secrets** to transact |
 | Order-confirmation email + signed order-lookup page | ✅ Built (no-op until email keys set) |
 
 Detailed plan & progress: [`docs/architecture/backend-plan.md`](docs/architecture/backend-plan.md).

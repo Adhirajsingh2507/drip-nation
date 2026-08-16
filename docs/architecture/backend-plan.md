@@ -143,7 +143,8 @@ The core commerce phase. Split into reviewable sub-steps. **Detailed design draf
   per-IP 8 / 10 min; service-role only). Verified.
 - 🟡 **Observability** — structured logs added to both functions; **webhook-failure
   alerting** still ⬜ (needs an external monitor once the functions are deployed).
-- ⬜ **Gate — load/abuse test:** needs the functions deployed (post Razorpay/Resend).
+- 🟡 **Gate — load/abuse test:** rate-limit abuse test ✅ **passed live** (checkout
+  throttles to `429` at 8 / 10 min); full payment load test still needs Razorpay keys.
 - **Risk:** medium.
 
 ---
