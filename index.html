@@ -1,3 +1,4 @@
+ <!-- anjali--lokkhi ma amar :) -->
 <!DOCTYPE html>
 <html lang="en">
 
@@ -12,100 +13,86 @@
   <script src="assets/js/vendor/supabase-js.min.js" defer></script>
   <script src="assets/js/supabase-client.js" defer></script>
   <script src="assets/js/store-bridge.js" defer></script>
-  <script src="assets/js/script.js" defer></script>
 </head>
 
 <body>
 
-  <!-- ── Hero Section ── -->
-  <div class="hero-container" id="hero">
-    <div class="layer layer-base">
-      <div class="full-img img2 base-left"></div>
-      <div class="full-img img1 base-right"></div>
-    </div>
-    <div class="layer layer-spotlight" id="spotlight-layer">
-      <div class="full-img img1 spot-left depth-effect"></div>
-      <div class="full-img img2 spot-right depth-effect"></div>
-    </div>
-    <div class="top-boundary-line"></div>
-    <div class="hero-content pointer-events-none">
-      <h1 class="hero-title" id="hero-title">THE DRIP NATION</h1>
-      <p class="hero-subtitle" id="hero-subtitle">Tap & Hold the Border</p>
-    </div>
-    <div class="bottom-boundary-line"></div>
-  </div>
+  <!-- ── Hero Section (Editorial Photo Marquee) ── -->
+  <section class="dn-hero" id="hero">
+    <span class="dn-hero-accent dn-hero-accent--tl">Premium<br>Streetwear</span>
+    <span class="dn-hero-accent dn-hero-accent--tr">Culture<br>Heritage</span>
 
-  <!-- SVG Mask -->
-  <svg style="position: absolute; width: 0; height: 0; overflow: hidden; pointer-events: none;" aria-hidden="true">
-    <defs>
-      <filter id="waterEdge">
-        <feGaussianBlur stdDeviation="20" result="blur" />
-        <feTurbulence id="turb" type="fractalNoise" baseFrequency="0.008" numOctaves="2" result="noise" />
-        <feDisplacementMap id="disp" in="blur" in2="noise" scale="25" xChannelSelector="R" yChannelSelector="G" />
-      </filter>
-      <mask id="waterMask" maskUnits="userSpaceOnUse">
-        <circle id="maskCircle" cx="-500" cy="-500" r="100" fill="white" filter="url(#waterEdge)" />
-      </mask>
-    </defs>
-  </svg>
+    <h1 class="dn-hero-wordmark dn-hero-wordmark--left">DRIP</h1>
 
-  <!-- ── Featured Categories (Dynamic from Admin) ── -->
-  <section class="dn-featured-section dn-reveal">
-    <span class="dn-section-label">[ COLLECTION ]</span>
-    <h2 class="dn-section-title">EXPLORE THE DROP</h2>
-    <div class="dn-featured-grid dn-reveal-children" id="featured-categories">
-      <!-- Rendered by JS -->
+    <div class="dn-hero-marquee">
+      <div class="dn-hero-marquee-track">
+        <div class="dn-hero-photo dn-hero-photo--sm" style="--y:-30px; --rot:-4deg; background-image:url('assets/images/i3%20(1).jpeg')"></div>
+        <div class="dn-hero-photo dn-hero-photo--md" style="--y:25px; --rot:2.5deg; background-image:url('assets/images/retro%20jerseys.jpeg')"></div>
+        <div class="dn-hero-photo dn-hero-photo--lg" style="--y:-10px; --rot:-1.5deg; background-image:url('assets/images/second%20page%20image.jpeg')"></div>
+        <div class="dn-hero-photo dn-hero-photo--md" style="--y:-35px; --rot:3deg; background-image:url('assets/images/i5.jpeg')"></div>
+        <div class="dn-hero-photo dn-hero-photo--sm" style="--y:30px; --rot:-2deg; background-image:url('assets/images/jackets.jpeg')"></div>
+        <div class="dn-hero-photo dn-hero-photo--lg" style="--y:-20px; --rot:1.5deg; background-image:url('assets/images/i4.jpeg')"></div>
+        <div class="dn-hero-photo dn-hero-photo--md" style="--y:35px; --rot:-3deg; background-image:url('assets/images/track%20and%20suit.jpeg')"></div>
+        <div class="dn-hero-photo dn-hero-photo--sm" style="--y:-25px; --rot:2deg; background-image:url('assets/images/i6.jpeg')"></div>
+        <div class="dn-hero-photo dn-hero-photo--sm" style="--y:-30px; --rot:-4deg; background-image:url('assets/images/i3%20(1).jpeg')"></div>
+        <div class="dn-hero-photo dn-hero-photo--md" style="--y:25px; --rot:2.5deg; background-image:url('assets/images/retro%20jerseys.jpeg')"></div>
+        <div class="dn-hero-photo dn-hero-photo--lg" style="--y:-10px; --rot:-1.5deg; background-image:url('assets/images/second%20page%20image.jpeg')"></div>
+        <div class="dn-hero-photo dn-hero-photo--md" style="--y:-35px; --rot:3deg; background-image:url('assets/images/i5.jpeg')"></div>
+        <div class="dn-hero-photo dn-hero-photo--sm" style="--y:30px; --rot:-2deg; background-image:url('assets/images/jackets.jpeg')"></div>
+        <div class="dn-hero-photo dn-hero-photo--lg" style="--y:-20px; --rot:1.5deg; background-image:url('assets/images/i4.jpeg')"></div>
+        <div class="dn-hero-photo dn-hero-photo--md" style="--y:35px; --rot:-3deg; background-image:url('assets/images/track%20and%20suit.jpeg')"></div>
+        <div class="dn-hero-photo dn-hero-photo--sm" style="--y:-25px; --rot:2deg; background-image:url('assets/images/i6.jpeg')"></div>
+      </div>
     </div>
+
+    <h1 class="dn-hero-wordmark dn-hero-wordmark--right">NATION</h1>
+
+    <span class="dn-hero-accent dn-hero-accent--br">Born From<br>The Streets</span>
   </section>
 
-  <!-- ── Marquee Ticker (Dynamic from Admin CMS) ── -->
-  <div class="dn-marquee-wrap">
-    <div class="dn-marquee-track" id="marquee-track">
-      <!-- Rendered by JS -->
+  <!-- ── Featured Categories ── -->
+  <section class="dn-featured-section dn-reveal">
+    <div class="dn-section-head">
+      <div>
+        <span class="dn-section-label">Collection</span>
+        <h2 class="dn-section-title">Explore the drop</h2>
+      </div>
+      <a href="shop.html" class="dn-section-link">View all</a>
     </div>
-  </div>
-
-  <!-- ── Brand Statement ── -->
-  <section class="dn-brand-statement dn-reveal">
-    <p class="dn-brand-statement-line1" id="brand-quote">"Where athletic heritage meets<br>the culture of tomorrow."</p>
-    <p class="dn-brand-statement-line2">DRIP NATION</p>
-    <div class="dn-brand-rule"></div>
-    <a href="shop.html" class="dn-explore-cta">EXPLORE</a>
+    <div class="dn-featured-grid dn-reveal-children" id="featured-categories">
+    </div>
   </section>
 
   <script>
     document.addEventListener('DOMContentLoaded', async function () {
-      // ── Render Dynamic Categories (from Supabase) ──
       const grid = document.getElementById('featured-categories');
-      let categories = [];
+      let categories = [], products = [];
       try {
-        categories = await StoreBridge.getCategories();
-      } catch (e) {
-        console.error('[DripNation] categories load failed', e);
-      }
+        [categories, products] = await Promise.all([
+          StoreBridge.getCategories(), StoreBridge.getProducts()
+        ]);
+      } catch (e) { console.error('[DripNation] index load failed', e); return; }
 
-      if (categories.length > 0) {
-        grid.innerHTML = categories.map(cat => `
-          <a href="category.html?slug=${encodeURIComponent(cat.slug)}&name=${encodeURIComponent(cat.name)}" class="dn-featured-card">
-            <div class="dn-featured-card-bg" style="background-image: url('${cat.image}');"></div>
-            <div class="dn-featured-card-overlay"></div>
-            <span class="dn-featured-card-label">${cat.name.toUpperCase()}</span>
-            <span class="dn-featured-card-arrow">↗</span>
-          </a>
-        `).join('');
-      }
+      grid.innerHTML = categories.map(function (cat) {
+        var count = products.filter(function (p) {
+          return p.category.toLowerCase() === cat.name.toLowerCase();
+        }).length;
 
-      // ── Render Marquee Ticker ──
-      const marqueeTrack = document.getElementById('marquee-track');
-      const tickerItems = ['NEW ARRIVALS', 'RETRO JERSEYS', 'PREMIUM STREETWEAR', 'LIMITED DROPS', 'DRIP NATION 2026'];
-      let tickerHTML = '';
-      // Double for seamless loop
-      for (let loop = 0; loop < 2; loop++) {
-        tickerItems.forEach(item => {
-          tickerHTML += `<span class="dn-marquee-item">${item}</span><span class="dn-marquee-separator">◆</span>`;
-        });
-      }
-      marqueeTrack.innerHTML = tickerHTML;
+        return '<a href="category.html?slug=' + encodeURIComponent(cat.slug) +
+          '&name=' + encodeURIComponent(cat.name) + '" class="dn-featured-card">' +
+          '<div class="dn-featured-card-media">' +
+            '<div class="dn-featured-card-bg" style="background-image: url(\'' + cat.image + '\');"></div>' +
+          '</div>' +
+          '<div class="dn-featured-card-foot">' +
+            '<span class="dn-featured-card-label">' + cat.name + '</span>' +
+            '<span class="dn-featured-card-count">' + count + '</span>' +
+          '</div>' +
+        '</a>';
+      }).join('');
+
+      grid.classList.add('visible');
+      var sec = document.querySelector('.dn-featured-section');
+      if (sec) sec.classList.add('visible');
     });
   </script>
 

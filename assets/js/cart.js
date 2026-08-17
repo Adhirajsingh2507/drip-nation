@@ -64,19 +64,8 @@ const CartEngine = {
 
     updateAllBadges: function () {
         const count = this.getCount();
-        // Update all badge instances across the page
-        document.querySelectorAll('.dn-cart-count').forEach(badge => {
-            badge.innerText = count;
-            badge.style.transform = 'scale(1.3)';
-            setTimeout(() => badge.style.transform = 'scale(1)', 200);
-            badge.style.display = 'inline-flex';
-            badge.style.transition = 'transform 0.2s ease';
-        });
-        // Update nav badge
-        document.querySelectorAll('.dn-nav-cart-badge').forEach(badge => {
-            badge.innerText = count;
-            badge.style.transform = 'scale(1.3)';
-            setTimeout(() => badge.style.transform = 'scale(1)', 200);
+        document.querySelectorAll('.dn-cart-count, .dn-nav-cart-badge').forEach(badge => {
+            badge.textContent = count;
         });
     },
 
@@ -86,8 +75,8 @@ const CartEngine = {
         }
     },
 
-    showAddedFeedback: function () {
-        // Show a brief "Added" toast
+    showAddedFeedback: function (message) {
+        // Show a brief confirmation toast
         let toast = document.getElementById('dn-cart-toast');
         if (!toast) {
             toast = document.createElement('div');
@@ -97,23 +86,22 @@ const CartEngine = {
                 bottom: 30px;
                 left: 50%;
                 transform: translateX(-50%) translateY(20px);
-                background: rgba(255,255,255,0.95);
-                color: #000;
+                background: #000;
+                color: #fff;
                 font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-                font-size: 0.75rem;
+                font-size: 0.625rem;
                 font-weight: 400;
-                letter-spacing: 0.15em;
+                letter-spacing: 0.22em;
                 text-transform: uppercase;
-                padding: 12px 30px;
-                border-radius: 50px;
+                padding: 15px 34px;
                 z-index: 10001;
                 opacity: 0;
-                transition: opacity 0.3s ease, transform 0.3s ease;
+                transition: opacity 0.4s cubic-bezier(0.22, 1, 0.36, 1), transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
                 pointer-events: none;
             `;
             document.body.appendChild(toast);
         }
-        toast.textContent = '✓ ADDED TO BAG';
+        toast.textContent = message || 'Added to bag';
         toast.style.opacity = '1';
         toast.style.transform = 'translateX(-50%) translateY(0)';
         clearTimeout(toast._timer);
@@ -132,9 +120,9 @@ const CartEngine = {
             overlay.className = 'dn-modal-overlay';
             overlay.innerHTML = `
                 <div class="dn-modal-box">
-                    <div class="dn-modal-title">COMING SOON</div>
-                    <p class="dn-modal-text">We're building something incredible. Checkout will be available in the next drop. Stay locked in.</p>
-                    <button class="dn-modal-close" onclick="CartEngine.hideModal()">GOT IT</button>
+                    <div class="dn-modal-title">Coming Soon</div>
+                    <p class="dn-modal-text">Checkout opens with our next drop. Add pieces to your bag — they'll be waiting.</p>
+                    <button class="dn-modal-close" onclick="CartEngine.hideModal()">Got it</button>
                 </div>
             `;
             overlay.addEventListener('click', (e) => {
@@ -173,7 +161,7 @@ const CartEngine = {
                 <li><a href="shop.html" class="${currentPage === 'shop.html' ? 'active' : ''}">Shop</a></li>
                 <li>
                     <a href="cart.html" class="dn-nav-cart ${currentPage === 'cart.html' ? 'active' : ''}">
-                        Cart <span class="dn-nav-cart-badge dn-cart-count">${count}</span>
+                        Bag <span class="dn-nav-cart-badge dn-cart-count">${count}</span>
                     </a>
                 </li>
             </ul>
@@ -270,13 +258,8 @@ const CartEngine = {
             }
             .dn-full-nav a:hover {
                 opacity: 1;
-                transform: translateX(30px);
             }
-            @media (max-width: 768px) {
-                .dn-full-nav {
-                    padding-left: 20px;
-                }
-            }
+            .dn-full-nav a:active { opacity: 0.5; }
         `;
         document.head.appendChild(style);
 
@@ -295,9 +278,9 @@ const CartEngine = {
         fullNav.className = 'dn-full-nav';
         fullNav.id = 'dn-full-nav';
         fullNav.innerHTML = `
-            <a href="index.html">HOME</a>
-            <a href="shop.html">SHOP</a>
-            <a href="cart.html">CART (<span class="dn-cart-count">${count}</span>)</a>
+            <a href="index.html">Home</a>
+            <a href="shop.html">Shop</a>
+            <a href="cart.html">Bag (<span class="dn-cart-count">${count}</span>)</a>
         `;
         document.body.appendChild(fullNav);
     },
@@ -330,27 +313,22 @@ const CartEngine = {
                     <div class="dn-footer-col-title">Support</div>
                     <ul class="dn-footer-links">
                         <li><a href="#">Size Guide</a></li>
-                        <li><a href="#">Shipping</a></li>
-                        <li><a href="#">Returns</a></li>
                         <li><a href="#">Contact</a></li>
-                        <li><a href="#">FAQ</a></li>
                     </ul>
                 </div>
                 <div>
-                    <div class="dn-footer-col-title">Stay Connected</div>
-                    <p class="dn-footer-newsletter-text">Get early access to drops, exclusive offers, and behind-the-scenes content.</p>
-                    <form class="dn-footer-newsletter-form" onsubmit="event.preventDefault(); this.querySelector('input').value = ''; CartEngine.showAddedFeedback();">
-                        <input type="email" class="dn-footer-newsletter-input" placeholder="YOUR EMAIL" required>
-                        <button type="submit" class="dn-footer-newsletter-btn">SUBMIT</button>
+                    <div class="dn-footer-col-title">Newsletter</div>
+                    <p class="dn-footer-newsletter-text">Early access to drops, private offers, and studio notes.</p>
+                    <form class="dn-footer-newsletter-form" onsubmit="event.preventDefault(); this.querySelector('input').value = ''; CartEngine.showAddedFeedback('Subscribed');">
+                        <input type="email" class="dn-footer-newsletter-input" placeholder="Email address" required>
+                        <button type="submit" class="dn-footer-newsletter-btn">Submit</button>
                     </form>
                 </div>
             </div>
             <div class="dn-footer-bottom">
-                <span class="dn-footer-copy">© 2026 DRIP NATION. ALL RIGHTS RESERVED.</span>
+                <span class="dn-footer-copy">© 2026 Drip Nation</span>
                 <div class="dn-footer-socials">
-                    <a href="#">INSTAGRAM</a>
-                    <a href="#">TWITTER</a>
-                    <a href="#">TIKTOK</a>
+                    <a href="#">Instagram</a>
                 </div>
             </div>
         `;

@@ -164,7 +164,7 @@ const StoreBridge = {
                     <span class="dn-product-card-price">${priceDisplay}</span>
                 </div>
                 <div class="dn-product-card-actions">
-                    <button class="dn-add-cart-btn" onclick="event.stopPropagation(); CartEngine.addItem(${product.id}, '${safeName}', '${cartPrice}', '${primaryImage}', '')">+ ADD</button>
+                    <button class="dn-add-cart-btn" onclick="event.stopPropagation(); CartEngine.addItem(${product.id}, '${safeName}', '${cartPrice}', '${primaryImage}', '')">Add</button>
                 </div>
             </div>
         `;

@@ -12,93 +12,62 @@
     <script src="assets/js/supabase-client.js" defer></script>
     <script src="assets/js/store-bridge.js" defer></script>
     <style>
-        .shop-body { padding-top: 80px; }
-        .shop-heading {
-            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-            font-weight: 800; font-size: clamp(3.5rem, 8vw, 6rem);
-            letter-spacing: 0.05em; text-transform: uppercase;
-            margin: 0 40px 10px 40px; line-height: 0.9;
-        }
-        .shop-subheading {
-            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-            font-size: 0.7rem; font-weight: 300; letter-spacing: 0.25em;
-            text-transform: uppercase; color: var(--text-muted);
-            margin: 0 40px 40px 40px;
-        }
         .shop-grid {
-            width: 100%; max-width: 1400px; margin: 0 auto;
-            display: flex; flex-direction: column; gap: 20px; padding: 0 40px 80px 40px;
+            width: 100%; max-width: var(--maxw); margin: 0 auto;
+            display: flex; flex-direction: column;
+            border-top: 1px solid var(--rule);
+            padding: 0 var(--gutter) 100px var(--gutter);
         }
         .shop-card {
-            position: relative; width: 100%; height: clamp(220px, 30vh, 380px);
-            border-radius: 16px; overflow: hidden; display: flex;
-            align-items: center; justify-content: space-between;
-            cursor: pointer; text-decoration: none;
-            border: 1px solid var(--glass-border); box-shadow: var(--glass-shadow);
-            transition: transform var(--transition-smooth), border-color var(--transition-ease);
+            position: relative; display: grid;
+            grid-template-columns: 84px 1fr auto auto;
+            align-items: center; gap: 40px;
+            padding: 26px 0; border-bottom: 1px solid var(--rule);
+            transition: opacity var(--transition-ease);
         }
-        .shop-card:hover { transform: translateY(-5px); border-color: var(--glass-border-hover); }
         .shop-card-bg {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            width: 84px; height: 108px;
             background-size: cover; background-position: center;
-            filter: grayscale(100%) contrast(1.1) brightness(0.5);
-            transition: filter 0.8s cubic-bezier(0.19, 1, 0.22, 1); z-index: 0;
+            background-color: var(--grey-100);
+            transition: opacity 0.5s var(--ease);
         }
-        .shop-card:hover .shop-card-bg { filter: grayscale(0%) contrast(1.05) brightness(0.7); }
-        .shop-card-glass {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: linear-gradient(135deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.15) 100%);
-            backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px);
-            z-index: 1; pointer-events: none;
-        }
-        .shop-card-content {
-            position: relative; z-index: 2; width: 100%; height: 100%;
-            display: flex; align-items: flex-end; justify-content: space-between; padding: 30px;
-        }
+        .shop-card:hover .shop-card-bg { opacity: 0.8; }
         .shop-card-title {
-            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-            font-size: clamp(2rem, 5vw, 3.5rem); font-weight: 700;
-            letter-spacing: 0.05em; text-transform: uppercase; color: var(--primary);
-        }
-        .shop-card-arrow {
-            display: inline-flex; align-items: center; justify-content: center;
-            width: 44px; height: 44px; border: 1px dotted var(--text-muted);
-            border-radius: 50%; font-size: 1rem; color: var(--primary);
-            transition: transform var(--transition-ease), border-color var(--transition-ease); flex-shrink: 0;
-        }
-        .shop-card:hover .shop-card-arrow { transform: translate(6px, -6px); border-color: var(--primary); }
-        .shop-card-count {
-            position: absolute; top: 25px; right: 30px;
-            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-            font-size: 0.6rem; font-weight: 300; letter-spacing: 0.2em;
-            text-transform: uppercase; color: var(--text-muted); z-index: 2;
+            font-family: var(--font-display);
+            font-size: clamp(1.5rem, 3.4vw, 2.75rem); font-weight: 400;
+            letter-spacing: -0.015em; text-transform: uppercase;
+            color: var(--black); line-height: 1;
         }
         .shop-card-desc {
-            position: absolute; top: 25px; left: 30px;
-            font-size: 0.65rem; font-weight: 300; letter-spacing: 0.15em;
-            text-transform: uppercase; color: rgba(255,255,255,0.5); z-index: 2;
+            font-size: 0.6875rem; font-weight: 400; letter-spacing: 0.14em;
+            text-transform: uppercase; color: var(--text-muted);
+            text-align: right; max-width: 260px;
         }
-        @media (max-width: 768px) {
-            .shop-body { padding-top: 60px; }
-            .shop-heading { margin: 0 20px 8px 20px; }
-            .shop-subheading { margin: 0 20px 25px 20px; }
-            .shop-grid { padding: 0 15px 60px 15px; gap: 12px; }
-            .shop-card { height: 28vh; border-radius: 10px; }
-            .shop-card-content { padding: 20px; }
-            .shop-card-arrow { width: 34px; height: 34px; font-size: 0.7rem; }
+        .shop-card-count {
+            font-size: 0.625rem; font-weight: 400; letter-spacing: 0.16em;
+            text-transform: uppercase; color: var(--text-dim);
+            white-space: nowrap; min-width: 72px; text-align: right;
+        }
+        @media (max-width: 900px) {
+            .shop-card { grid-template-columns: 64px 1fr auto; gap: 20px; padding: 20px 0; }
+            .shop-card-bg { width: 64px; height: 84px; }
+            .shop-card-desc { display: none; }
+            .shop-card-count { min-width: 0; font-size: 0.5625rem; }
         }
     </style>
 </head>
 
-<body class="shop-body">
+<body>
     <nav class="dn-breadcrumbs">
         <a href="index.html">Home</a>
         <span class="separator">/</span>
         <span class="current">Shop</span>
     </nav>
 
-    <h1 class="shop-heading">Categories</h1>
-    <p class="shop-subheading" id="cat-count-label">[ SELECT A COLLECTION ]</p>
+    <header class="dn-page-head">
+        <h1 class="dn-page-title">Categories</h1>
+        <p class="dn-page-sub" id="cat-count-label">Select a collection</p>
+    </header>
 
     <div class="shop-grid" id="shop-grid">
         <!-- Rendered by JS -->
@@ -108,7 +77,7 @@
         document.addEventListener('DOMContentLoaded', async function () {
             const grid = document.getElementById('shop-grid');
             const label = document.getElementById('cat-count-label');
-            label.textContent = '[ LOADING… ]';
+            label.textContent = 'Loading…';
 
             let categories = [], products = [];
             try {
@@ -118,32 +87,26 @@
                 ]);
             } catch (e) {
                 console.error('[DripNation] shop load failed', e);
-                label.textContent = '[ COULD NOT LOAD ]';
+                label.textContent = 'Could not load';
                 grid.innerHTML = '<p style="color:var(--text-muted);padding:40px 0;">Could not load collections. Please refresh.</p>';
                 return;
             }
 
-            label.textContent = `[ ${categories.length} COLLECTIONS ]`;
+            label.textContent = categories.length + ' Collections';
 
             grid.innerHTML = categories.map(cat => {
                 const count = products.filter(p => p.category.toLowerCase() === cat.name.toLowerCase()).length;
                 return `
                     <a href="category.html?slug=${encodeURIComponent(cat.slug)}&name=${encodeURIComponent(cat.name)}" class="shop-card dn-reveal">
                         <div class="shop-card-bg" style="background-image: url('${cat.image}');"></div>
-                        <div class="shop-card-glass"></div>
-                        <span class="shop-card-desc">${cat.desc || ''}</span>
-                        <span class="shop-card-count">${count} PIECES</span>
-                        <div class="shop-card-content">
-                            <span class="shop-card-title">${cat.name}</span>
-                            <span class="shop-card-arrow">↗</span>
-                        </div>
+                        <span class="shop-card-title">${cat.name}</span>
+                        <span class="shop-card-desc">${(cat.desc || '').replace(/\.\s*$/, '')}</span>
+                        <span class="shop-card-count">${count} Pieces</span>
                     </a>
                 `;
             }).join('');
 
-            // Reveal the async-rendered cards directly. They're added after the initial
-            // scroll-reveal observer ran (Supabase fetch), so relying on the observer is
-            // racy — just mark them visible so they never get stuck at opacity:0.
+            // async-rendered cards → reveal directly (observer already ran)
             grid.querySelectorAll('.dn-reveal').forEach(el => el.classList.add('visible'));
         });
     </script>

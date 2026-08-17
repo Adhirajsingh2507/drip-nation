@@ -23,22 +23,20 @@
         <span class="current" id="breadcrumb-name">Collection</span>
     </nav>
 
-    <!-- Category Hero Banner -->
+    <!-- Category Header -->
     <div class="dn-category-hero">
-        <div class="dn-category-hero-bg" id="hero-bg"></div>
-        <div class="dn-category-hero-overlay"></div>
         <div class="dn-category-hero-content">
-            <h1 class="dn-category-hero-title" id="hero-title">COLLECTION</h1>
-            <p class="dn-category-hero-subtitle" id="hero-subtitle">LOADING...</p>
+            <h1 class="dn-category-hero-title" id="hero-title">Collection</h1>
+            <p class="dn-category-hero-subtitle" id="hero-subtitle">Loading</p>
         </div>
     </div>
 
-    <!-- Filter Pills -->
+    <!-- Filters -->
     <div class="dn-filter-bar">
         <button class="dn-filter-pill active" data-sort="all">All</button>
         <button class="dn-filter-pill" data-sort="low-stock">Low Stock</button>
-        <button class="dn-filter-pill" data-sort="price-asc">Price ↑</button>
-        <button class="dn-filter-pill" data-sort="price-desc">Price ↓</button>
+        <button class="dn-filter-pill" data-sort="price-asc">Price Low</button>
+        <button class="dn-filter-pill" data-sort="price-desc">Price High</button>
         <button class="dn-filter-pill" data-sort="sale">On Sale</button>
     </div>
 
@@ -46,9 +44,10 @@
     <div class="dn-product-grid" id="productGrid"></div>
 
     <!-- Empty State -->
-    <div id="emptyState" style="display:none; text-align:center; padding: 80px 20px;">
-        <p style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 1.6rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: rgba(255,255,255,0.2); margin-bottom: 16px;">NO PRODUCTS YET</p>
-        <p style="font-size: 0.8rem; color: rgba(255,255,255,0.4); letter-spacing: 0.1em;">Add products to this category from the <a href="admin.html" style="color: #fff; text-decoration: underline;">Admin Panel</a>.</p>
+    <div id="emptyState" class="dn-empty-state" style="display:none;">
+        <p class="dn-empty-title">No pieces yet</p>
+        <p class="dn-empty-text">This collection is being prepared. Check back soon.</p>
+        <a href="shop.html" class="dn-empty-link">Browse other collections</a>
     </div>
 
     <script>
@@ -61,7 +60,7 @@
             // ── Set page metadata ──
             document.title = categoryName + ' | Drip Nation';
             document.getElementById('breadcrumb-name').textContent = categoryName;
-            document.getElementById('hero-title').textContent = categoryName.toUpperCase();
+            document.getElementById('hero-title').textContent = categoryName;
 
             // ── Find category + load products (Supabase) ──
             let category = null, allProducts = [];
@@ -71,17 +70,14 @@
                 allProducts = await StoreBridge.getProductsByCategory(categoryName);
             } catch (e) {
                 console.error('[DripNation] category load failed', e);
-                document.getElementById('hero-subtitle').textContent = 'COULD NOT LOAD COLLECTION';
+                document.getElementById('hero-subtitle').textContent = 'Could not load';
                 document.getElementById('emptyState').style.display = 'block';
                 return;
             }
 
-            if (category) {
-                document.getElementById('hero-bg').style.backgroundImage = `url('${category.image}')`;
-            }
-
+            const blurb = (category?.desc || 'Premium collection').replace(/\.\s*$/, '');
             document.getElementById('hero-subtitle').textContent =
-                (category?.desc || 'PREMIUM COLLECTION').toUpperCase() + ' · ' + allProducts.length + ' PIECES';
+                blurb + ' — ' + allProducts.length + ' Pieces';
 
             function renderGrid(products) {
                 const grid = document.getElementById('productGrid');
