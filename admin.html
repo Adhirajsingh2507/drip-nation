@@ -665,12 +665,12 @@
                         </div>
                     </div>
                     
-                    <label style="font-size: 0.65rem; font-weight: 500; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; display: block; margin-top: 10px;">Images for Revolving View</label>
+                    <label style="font-size: 0.65rem; font-weight: 500; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; display: block; margin-top: 10px;">Images for Revolving View — paste a URL or upload a JPG</label>
                     <div class="form-row-4">
-                        <div class="field span-1"><input type="text" id="m-prod-img1" placeholder="Image 1 Path" required></div>
-                        <div class="field span-1"><input type="text" id="m-prod-img2" placeholder="Image 2 Path" required></div>
-                        <div class="field span-1"><input type="text" id="m-prod-img3" placeholder="Image 3 Path" required></div>
-                        <div class="field span-1"><input type="text" id="m-prod-img4" placeholder="Image 4 Path" required></div>
+                        <div class="field span-1"><input type="text" id="m-prod-img1" placeholder="Image 1 Path" required><input type="file" accept="image/jpeg,image/png,image/webp" onchange="uploadProductImage(event, 1)" style="margin-top:6px;font-size:0.7rem;"></div>
+                        <div class="field span-1"><input type="text" id="m-prod-img2" placeholder="Image 2 Path" required><input type="file" accept="image/jpeg,image/png,image/webp" onchange="uploadProductImage(event, 2)" style="margin-top:6px;font-size:0.7rem;"></div>
+                        <div class="field span-1"><input type="text" id="m-prod-img3" placeholder="Image 3 Path" required><input type="file" accept="image/jpeg,image/png,image/webp" onchange="uploadProductImage(event, 3)" style="margin-top:6px;font-size:0.7rem;"></div>
+                        <div class="field span-1"><input type="text" id="m-prod-img4" placeholder="Image 4 Path" required><input type="file" accept="image/jpeg,image/png,image/webp" onchange="uploadProductImage(event, 4)" style="margin-top:6px;font-size:0.7rem;"></div>
                     </div>
 
                     <div class="field">
@@ -950,6 +950,22 @@
                 return;
             }
             logActivity('Category deleted'); await renderAll(); toast('Category deleted');
+        }
+
+        // Upload a JPG/PNG to Supabase Storage (bucket 'product-images') using the
+        // authenticated admin session; drop the resulting public URL into the slot.
+        async function uploadProductImage(e, slot) {
+            const file = e.target.files[0];
+            if (!file) return;
+            if (file.size > 5 * 1024 * 1024) { toast('Image too large (max 5MB).'); e.target.value = ''; return; }
+            const field = document.getElementById('m-prod-img' + slot);
+            const prev = field.value; field.value = 'Uploading…';
+            const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
+            const path = `products/${Date.now()}-${slot}.${ext}`;
+            const { error } = await sb.storage.from('product-images').upload(path, file, { contentType: file.type, upsert: false });
+            if (error) { toast('Upload failed: ' + error.message); field.value = prev; e.target.value = ''; return; }
+            field.value = sb.storage.from('product-images').getPublicUrl(path).data.publicUrl;
+            toast('Image uploaded.');
         }
 
         async function submitProduct(e) {

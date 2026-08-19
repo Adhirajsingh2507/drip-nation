@@ -82,6 +82,7 @@ More: [`docs/architecture/system-architecture.md`](docs/architecture/system-arch
 | `0006_checkout` | Razorpay columns, `payment_events`, atomic `apply_paid_order`/`redeem_promo` |
 | `0007_rate_limit` | Per-IP checkout rate limiting (`rate_ok`, abuse protection) |
 | `0008_lock_trigger_fn` | Revoke direct execute on the signup trigger fn (surface reduction) |
+| `0009_product_images_storage` | Public-read `product-images` Storage bucket; admin-only uploads (`is_admin()`) |
 
 Money is stored as **integer whole rupees** everywhere. Migrations are applied to the
 Supabase project; the SQL files are the source of truth.
