@@ -5,7 +5,7 @@
 The admin panel is available at:
 
 ```
-https://dripnation.vercel.app/admin.html
+https://www.dripnation.co.in/admin.html
 ```
 
 For local development:

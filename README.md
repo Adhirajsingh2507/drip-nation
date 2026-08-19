@@ -108,7 +108,7 @@ design; RLS enforces access), so the catalog loads locally too.
 
 ## Admin panel (`/admin.html`)
 
-Full access + security guide: **[docs/admin-panel.md](docs/admin-panel.md)**.
+Full access + security guide: **[docs/admin-panel-guide.md](docs/admin-panel-guide.md)**.
 
 Email/password sign-in + sign-up. **Creating an account does not grant admin** — a user
 must be in the `admins` table.
@@ -144,5 +144,7 @@ Code is complete; going live needs external accounts. See the deploy guide in
 
 ## Deployment
 
-Vercel auto-deploys on every push to `main` (project **`drip-nation`**). Supabase
+Vercel auto-deploys on every push to `main` (project **`drip-nation`** under the
+client's **`dripnation-owner`** team → https://vercel.com/dripnation-owner/drip-nation).
+Supabase
 migrations are applied separately (they are not part of the Vercel build).
