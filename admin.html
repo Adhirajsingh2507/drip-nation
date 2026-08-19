@@ -7,6 +7,7 @@
     <title>DRIP NATION · Admin</title>
     <meta name="description" content="Drip Nation internal admin control panel.">
     <style>
+        #m-prod-dropzone.dz-over { border-color: var(--fg, #000); background: rgba(0,0,0,0.04); }
         /* ── Minimalist Design Tokens ── */
         :root {
             --sidebar-w: 240px;
@@ -665,12 +666,22 @@
                         </div>
                     </div>
                     
-                    <label style="font-size: 0.65rem; font-weight: 500; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; display: block; margin-top: 10px;">Images for Revolving View — paste a URL or upload a JPG</label>
-                    <div class="form-row-4">
-                        <div class="field span-1"><input type="text" id="m-prod-img1" placeholder="Image 1 Path" required><input type="file" accept="image/jpeg,image/png,image/webp" onchange="uploadProductImage(event, 1)" style="margin-top:6px;font-size:0.7rem;"></div>
-                        <div class="field span-1"><input type="text" id="m-prod-img2" placeholder="Image 2 Path" required><input type="file" accept="image/jpeg,image/png,image/webp" onchange="uploadProductImage(event, 2)" style="margin-top:6px;font-size:0.7rem;"></div>
-                        <div class="field span-1"><input type="text" id="m-prod-img3" placeholder="Image 3 Path" required><input type="file" accept="image/jpeg,image/png,image/webp" onchange="uploadProductImage(event, 3)" style="margin-top:6px;font-size:0.7rem;"></div>
-                        <div class="field span-1"><input type="text" id="m-prod-img4" placeholder="Image 4 Path" required><input type="file" accept="image/jpeg,image/png,image/webp" onchange="uploadProductImage(event, 4)" style="margin-top:6px;font-size:0.7rem;"></div>
+                    <label style="font-size: 0.65rem; font-weight: 500; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; display: block; margin-top: 10px;">Images for Revolving View — drag &amp; drop, or click to choose (up to 4)</label>
+                    <div id="m-prod-dropzone"
+                         onclick="document.getElementById('m-prod-filepicker').click()"
+                         ondragover="event.preventDefault(); this.classList.add('dz-over')"
+                         ondragleave="this.classList.remove('dz-over')"
+                         ondrop="dropProductImages(event)"
+                         style="border:2px dashed var(--muted); border-radius:8px; padding:22px; text-align:center; cursor:pointer; color:var(--muted); font-size:0.8rem; user-select:none;">
+                        Drop JPG/PNG/WebP here, or click to choose from folder
+                    </div>
+                    <input type="file" id="m-prod-filepicker" accept="image/jpeg,image/png,image/webp" multiple style="display:none;" onchange="pickProductImages(event)">
+                    <div id="m-prod-thumbs" style="display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;"></div>
+                    <div class="form-row-4" style="margin-top:10px;">
+                        <div class="field span-1"><input type="text" id="m-prod-img1" placeholder="Image 1 URL" required></div>
+                        <div class="field span-1"><input type="text" id="m-prod-img2" placeholder="Image 2 URL" required></div>
+                        <div class="field span-1"><input type="text" id="m-prod-img3" placeholder="Image 3 URL" required></div>
+                        <div class="field span-1"><input type="text" id="m-prod-img4" placeholder="Image 4 URL" required></div>
                     </div>
 
                     <div class="field">
@@ -952,20 +963,46 @@
             logActivity('Category deleted'); await renderAll(); toast('Category deleted');
         }
 
-        // Upload a JPG/PNG to Supabase Storage (bucket 'product-images') using the
-        // authenticated admin session; drop the resulting public URL into the slot.
-        async function uploadProductImage(e, slot) {
-            const file = e.target.files[0];
-            if (!file) return;
-            if (file.size > 5 * 1024 * 1024) { toast('Image too large (max 5MB).'); e.target.value = ''; return; }
+        // ── Product image upload (drag & drop / folder pick → Supabase Storage) ──
+        // Uploads to bucket 'product-images' with the authenticated admin session and
+        // fills the next empty of the 4 URL slots. Public URL is what gets saved.
+        function nextEmptyImageSlot() {
+            for (let i = 1; i <= 4; i++) if (!document.getElementById('m-prod-img' + i).value.trim()) return i;
+            return 0;   // all full
+        }
+        function renderImageThumbs() {
+            document.getElementById('m-prod-thumbs').innerHTML = [1, 2, 3, 4].map(i => {
+                const url = document.getElementById('m-prod-img' + i).value.trim();
+                if (!url || url === 'Uploading…') return '';
+                return `<img src="${url}" style="width:56px;height:56px;object-fit:cover;border-radius:6px;border:1px solid var(--muted);">`;
+            }).join('');
+        }
+        async function uploadOneImage(file) {
+            if (!/^image\/(jpeg|png|webp)$/.test(file.type)) { toast(`Skipped ${file.name}: not JPG/PNG/WebP.`); return; }
+            if (file.size > 5 * 1024 * 1024) { toast(`Skipped ${file.name}: over 5MB.`); return; }
+            const slot = nextEmptyImageSlot();
+            if (!slot) { toast('All 4 image slots are full.'); return; }
             const field = document.getElementById('m-prod-img' + slot);
-            const prev = field.value; field.value = 'Uploading…';
+            field.value = 'Uploading…';
             const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
-            const path = `products/${Date.now()}-${slot}.${ext}`;
+            const path = `products/${Date.now()}-${slot}-${Math.random().toString(36).slice(2, 7)}.${ext}`;
             const { error } = await sb.storage.from('product-images').upload(path, file, { contentType: file.type, upsert: false });
-            if (error) { toast('Upload failed: ' + error.message); field.value = prev; e.target.value = ''; return; }
+            if (error) { toast('Upload failed: ' + error.message); field.value = ''; return; }
             field.value = sb.storage.from('product-images').getPublicUrl(path).data.publicUrl;
-            toast('Image uploaded.');
+            renderImageThumbs();
+        }
+        async function uploadImageList(files) {
+            for (const file of files) await uploadOneImage(file);   // sequential: keeps slot order deterministic
+            toast('Images uploaded.');
+        }
+        function dropProductImages(e) {
+            e.preventDefault();
+            document.getElementById('m-prod-dropzone').classList.remove('dz-over');
+            uploadImageList(e.dataTransfer.files);
+        }
+        function pickProductImages(e) {
+            uploadImageList(e.target.files);
+            e.target.value = '';   // allow re-picking the same file
         }
 
         async function submitProduct(e) {
@@ -993,6 +1030,7 @@
             logActivity(`Product saved: ${name}`);
             closeModal('product-modal'); e.target.reset();
             document.getElementById('m-prod-edit-id').value = '';
+            renderImageThumbs();
             document.getElementById('product-modal-title').innerText = 'Product CMS';
             await renderAll(); toast(editId ? 'Product updated' : 'Product added');
         }
@@ -1010,6 +1048,7 @@
             document.getElementById('m-prod-desc').value = p.desc || '';
             const imgs = p.images && p.images.length ? p.images : [];
             for (let i = 0; i < 4; i++) document.getElementById('m-prod-img' + (i + 1)).value = imgs[i] || '';
+            renderImageThumbs();
             document.getElementById('product-modal-title').innerText = 'Edit Product';
             document.getElementById('m-prod-category').innerHTML = CATS.map(c => `<option value="${esc(c.name)}">${esc(c.name)}</option>`).join('');
             document.getElementById('m-prod-category').value = p.category;
